@@ -6,11 +6,13 @@
    0 non-manifold edges and 0 non-manifold vertices.  It also does some basic processing.
    See 'Manifold_Triangle_Mesh_1.jpg' for a picture of the mesh embedded in 2-D.
 
-   Copyright (c) 11-18-2015,  Shawn W. Walker
+   Copyright (c) 12-08-2016,  Shawn W. Walker
 ============================================================================================
 */
 
-#include "../src_code/TriMesh.cc"
+#ifndef _TYPEDEFMESHES_H
+#include "../src_code/TypedefMeshes.h"
+#endif
 
 using namespace std;
 
@@ -20,37 +22,49 @@ int main()
     // init output code
     int OUTPUT_CODE = 0; // 0 indicates success, 1 is failure
 
-    // create the object
+    // create the object: manifold 2-D mesh example
     TriMesh  TM;
 
-    // manifold 2-D mesh example
-    TM.Reserve_Cell(4);
-    TM.Append_Cell(1,2,5);
-    TM.Append_Cell(2,3,5);
-    TM.Append_Cell(3,4,5);
-    TM.Append_Cell(4,1,5);
+    // define the cell connectivity
+    TM.Reserve_Cells(4);
+    TM.Append_Cell(0,1,4);
+    TM.Append_Cell(1,2,4);
+    TM.Append_Cell(2,3,4);
+    TM.Append_Cell(3,0,4);
 
-    // we now stop adding cells
+	// now add the vertex point coordinates
+	TM.Init_Points(5);
+	TM.Set_Coord(0, 0.0,0.0);
+	TM.Set_Coord(1, 1.0,0.0);
+	TM.Set_Coord(2, 1.0,1.0);
+	TM.Set_Coord(3, 0.0,1.0);
+	TM.Set_Coord(4, 0.5,0.5);
+	
+	// now display coordinates
+	cout << endl;
+	TM.Display_Vtx_Coord();
+	
+    // we now stop adding cells and coordinates
     TM.Finalize_v2hfs();
-
+	
     // now display the half-facets (attached to vertices) of the intermediate structure 'v2hfs'
     cout << endl;
     TM.Display_v2hfs();
 
     // check 'v2hfs' against reference data
     VtxHalfFacetType v2hfs_REF[12];
-    v2hfs_REF[ 0].Set(2,1,3);
-    v2hfs_REF[ 1].Set(3,2,3);
-    v2hfs_REF[ 2].Set(4,3,3);
-    v2hfs_REF[ 3].Set(4,4,3);
-    v2hfs_REF[ 4].Set(5,1,1);
-    v2hfs_REF[ 5].Set(5,1,2);
-    v2hfs_REF[ 6].Set(5,2,1);
-    v2hfs_REF[ 7].Set(5,2,2);
-    v2hfs_REF[ 8].Set(5,3,1);
-    v2hfs_REF[ 9].Set(5,3,2);
-    v2hfs_REF[10].Set(5,4,1);
-    v2hfs_REF[11].Set(5,4,2);
+    v2hfs_REF[ 0].Set(1,0,2);
+    v2hfs_REF[ 1].Set(2,1,2);
+    v2hfs_REF[ 2].Set(3,2,2);
+    v2hfs_REF[ 3].Set(3,3,2);
+    v2hfs_REF[ 4].Set(4,0,0);
+    v2hfs_REF[ 5].Set(4,0,1);
+    v2hfs_REF[ 6].Set(4,1,0);
+    v2hfs_REF[ 7].Set(4,1,1);
+    v2hfs_REF[ 8].Set(4,2,0);
+    v2hfs_REF[ 9].Set(4,2,1);
+    v2hfs_REF[10].Set(4,3,0);
+    v2hfs_REF[11].Set(4,3,1);
     // error check
     const Vtx2HalfFacet_Mapping& c_V2HF_Map = TM.Get_v2hfs();
     const std::vector<VtxHalfFacetType>& c_v2hfs = c_V2HF_Map.Get_VtxMap();
@@ -74,43 +88,47 @@ int main()
     CellSimplexType<2> Cell_REF[4];
     HalfFacetType hf;
     // Cell #1
-    Cell_REF[ 0].Set(0,1,hf.Set(2,2));
-    Cell_REF[ 0].Set(1,2,hf.Set(4,1));
-    Cell_REF[ 0].Set(2,5,hf.Set());
+    Cell_REF[ 0].Set(0,0,hf.Set(1,1));
+    Cell_REF[ 0].Set(1,1,hf.Set(3,0));
+    Cell_REF[ 0].Set(2,4,hf.Set());
     // Cell #2
-    Cell_REF[ 1].Set(0,2,hf.Set(3,2));
-    Cell_REF[ 1].Set(1,3,hf.Set(1,1));
-    Cell_REF[ 1].Set(2,5,hf.Set());
+    Cell_REF[ 1].Set(0,1,hf.Set(2,1));
+    Cell_REF[ 1].Set(1,2,hf.Set(0,0));
+    Cell_REF[ 1].Set(2,4,hf.Set());
     // Cell #3
-    Cell_REF[ 2].Set(0,3,hf.Set(4,2));
-    Cell_REF[ 2].Set(1,4,hf.Set(2,1));
-    Cell_REF[ 2].Set(2,5,hf.Set());
+    Cell_REF[ 2].Set(0,2,hf.Set(3,1));
+    Cell_REF[ 2].Set(1,3,hf.Set(1,0));
+    Cell_REF[ 2].Set(2,4,hf.Set());
     // Cell #4
-    Cell_REF[ 3].Set(0,4,hf.Set(1,2));
-    Cell_REF[ 3].Set(1,1,hf.Set(3,1));
-    Cell_REF[ 3].Set(2,5,hf.Set());
+    Cell_REF[ 3].Set(0,3,hf.Set(0,1));
+    Cell_REF[ 3].Set(1,0,hf.Set(2,0));
+    Cell_REF[ 3].Set(2,4,hf.Set());
+	
     // error check
-    for (CellIndType kk = 0; kk < TM.Num_Cell(); ++kk)
+    for (CellIndType kk = 0; kk < TM.Num_Cells(); ++kk)
+	{
+		const CellSimplexType<2> CL = TM.Get_Cell(kk);
         if (!TM.Cell[kk].Equal(Cell_REF[kk]))
         {
             cout << "Cell connectivity (and sibling half-facets) is incorrect!" << endl;
             OUTPUT_CODE = 2;
             break;
         }
-
+	}
+	
     // generate the Vtx2HalfFacets data struct
     TM.Build_Vtx2HalfFacets();
     // now display half-facets attached to vertices for final data structure
     TM.Display_Vtx2HalfFacets();
     cout << endl;
-
+	
     // check 'Vtx2HalfFacets' against reference data
     VtxHalfFacetType Vtx2HalfFacets_REF[5];
-    Vtx2HalfFacets_REF[ 0].Set( 1,4,3);
-    Vtx2HalfFacets_REF[ 1].Set( 2,2,3);
-    Vtx2HalfFacets_REF[ 2].Set( 3,3,3);
-    Vtx2HalfFacets_REF[ 3].Set( 4,4,3);
-    Vtx2HalfFacets_REF[ 4].Set( 5,1,1);
+    Vtx2HalfFacets_REF[ 0].Set( 0,3,2);
+    Vtx2HalfFacets_REF[ 1].Set( 1,1,2);
+    Vtx2HalfFacets_REF[ 2].Set( 2,2,2);
+    Vtx2HalfFacets_REF[ 3].Set( 3,3,2);
+    Vtx2HalfFacets_REF[ 4].Set( 4,0,0);
     // error check
     const std::vector<VtxHalfFacetType>& c_Vtx2HF = TM.Vtx2HalfFacets.Get_VtxMap();
     for (VtxIndType jj = 0; jj < c_Vtx2HF.size(); ++jj)
@@ -122,14 +140,14 @@ int main()
         }
 
     // display cells attached to a vertex
-    VtxIndType V_IN = 3;
+    VtxIndType V_IN = 2;
     TM.Display_Cells_Attached_To_Vertex(V_IN);
     cout << endl;
 
     // check attached cells against reference data
     std::vector<CellIndType> cell_ind_1;
-    TM.Get_Cells_Attached_To_Vertex(V_IN, 3, cell_ind_1);
-    const CellIndType cell_ind_1_REF[2] = {3, 2};
+    TM.Get_Cells_Attached_To_Vertex(V_IN, 2, cell_ind_1);
+    const CellIndType cell_ind_1_REF[2] = {2, 1};
     for (unsigned int jj = 0; jj < cell_ind_1.size(); ++jj)
         if (cell_ind_1[jj]!=cell_ind_1_REF[jj])
         {
@@ -139,9 +157,9 @@ int main()
         }
 
     // display if two cells are facet connected
-    const  VtxIndType V1 = 2;
-    const CellIndType C1 = 1;
-    const CellIndType C2 = 2;
+    const  VtxIndType V1 = 1;
+    const CellIndType C1 = 0;
+    const CellIndType C2 = 1;
     TM.Display_Two_Cells_Are_Facet_Connected(V1, C1, C2);
     cout << endl;
 
@@ -156,14 +174,14 @@ int main()
 
     // display half-facets attached to given half-facet
     HalfFacetType TEST_attached;
-    TEST_attached.Set(4,2);
+    TEST_attached.Set(3,1);
     TM.Display_HalfFacets_Attached_To_HalfFacet(TEST_attached);
     cout << endl;
 
     // check attached half-facets against reference data
     HalfFacetType attached_REF[2];
-    attached_REF[0].Set(4,2);
-    attached_REF[1].Set(3,1);
+    attached_REF[0].Set(3,1);
+    attached_REF[1].Set(2,0);
     std::vector<HalfFacetType> attached;
     TM.Get_HalfFacets_Attached_To_HalfFacet(TEST_attached, attached);
     for (unsigned int jj = 0; jj < attached.size(); ++jj)
@@ -175,7 +193,7 @@ int main()
         }
 
     // check that half-facet has no neighbor
-    TEST_attached.Set(3,3);
+    TEST_attached.Set(2,2);
     TM.Get_HalfFacets_Attached_To_HalfFacet(TEST_attached, attached);
     if (attached.size()!=1)
     {
@@ -221,7 +239,7 @@ int main()
     // check unique vertices against reference data
     std::vector<VtxIndType> uv;
     TM.Get_Unique_Vertices(uv);
-    const VtxIndType uv_REF[5] = {1, 2, 3, 4, 5};
+    const VtxIndType uv_REF[5] = {0, 1, 2, 3, 4};
     for (unsigned int jj = 0; jj < uv.size(); ++jj)
         if (uv[jj]!=uv_REF[jj])
         {

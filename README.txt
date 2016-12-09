@@ -1,7 +1,7 @@
 
   Implementation of Array Based Half-Facet (AHF) Mesh Data Structure
 	         (for 1-D, 2-D, 3-D, simplex meshes only)
-                 (C) 11/20/2015, Shawn W. Walker
+                 (C) 12/09/2016, Shawn W. Walker
 
 This code is open source under the BSD license.
 
@@ -10,7 +10,7 @@ DESCRIPTION
 
 This is a C++ implementation of the Array Based Half-Facet (AHF) data structure for unstructured simplicial meshes.  The base class is implemented for *any* dimension through C++ templating.
 
-Source code can be found at:   GitHub.
+Source code can be found at:   http://github.com/walkersw/AHF
 
 USAGE
 ========================================================================
@@ -30,7 +30,7 @@ running "MSVC_Init_Vars" at the command prompt. (Note: you will need to modify "
 - Next run "MSVC_Compile_AHF_Unit_Tests" at the command prompt.
 - Then run "MSVC_Run_AHF_Unit_Tests" to execute the generated exe's.
 
-NOTE: the actual compiling commands can be found in "MSVC_Compile_AHF.cmd".
+NOTE: the actual compiling commands can be found in "MSVC_Compile.cmd".
 
 4. If you use g++ in a Linux environment, then some script files are included in the "Unit_Test" sub-directory.
 
@@ -40,8 +40,9 @@ To compile and run the object files, do the following:
 - Compile: type "make" at the bash prompt and press enter.
 - Run: type "./Linux_Run_AHF_Unit_Tests.sh" to execute the object files. (make sure you have execute permissions enabled for this script.)
 
-NOTE: the actual compiling commands can be found in "makefile".
+The actual compiling commands can be found in "makefile".
 
+5. NOTE: this class uses 0-based indexing!
 
 
 COMPATIBILITY NOTES

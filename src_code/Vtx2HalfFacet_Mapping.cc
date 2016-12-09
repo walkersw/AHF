@@ -2,51 +2,53 @@
 ============================================================================================
    Class for mapping from a given vertex index to (several) incident half-facets.
    Note: this is generic, meaning this can be used for half-facets in 1-D, 2-D,
-         and 3-D meshes.
+         and 3-D meshes (or higher dimensions!).
 
    EXAMPLE:
 
       Diagram depicting half-edges (half-facets for 2-D meshes):
 
-                   <2,1>
-        V4 +-------------------+ V3
+                   <1,0>
+        V3 +-------------------+ V2
            |\                  |
-           |  \          T2    |
+           |  \          T1    |
            |    \              |
-           |      \  <2,2>     |
-     <1,2> |        \          | <2,3>
-           |    <1,1> \        |
+           |      \  <1,1>     |
+     <0,1> |        \          | <1,2>
+           |    <0,0> \        |
            |            \      |
            |              \    |
-           |     T1         \  |
+           |     T0         \  |
            |                  \|
-        V1 +-------------------+ V2
-                   <1,3>
+        V0 +-------------------+ V1
+                   <0,2>
 
    Triangle Connectivity:
 
    triangle |   vertices
-    indices |  V1, V2, V3
+    indices |  V0, V1, V2
    ---------+--------------
-       1    |   1,  2,  4
-       2    |   2,  3,  4
+       0    |   0,  1,  3
+       1    |   1,  2,  3
 
    Half-Edges attached to vertices:
 
-       Vertex V1:  V1--><1,2>
-                   V1--><1,3>
-       Vertex V2:  V2--><1,3>
-                   V2--><1,1>
-                   V2--><2,2>
-                   V2--><2,3>
+       Vertex V0:  V0--><0,1>
+                   V0--><0,2>
+       Vertex V1:  V1--><0,2>
+                   V1--><0,0>
+                   V1--><1,1>
+                   V1--><1,2>
        etc...
 
-   where <ti,ei> is a half-edge attached to V1, where ti and ei define the particular
-   half-edge.
+   where <Ti,Ei> is a half-edge attached to Vi, where Ti (the cell index) and
+   Ei (the local edge index) define the particular half-edge.
 
-   Copyright (c) 11-05-2015,  Shawn W. Walker
+   Copyright (c) 12-08-2016,  Shawn W. Walker
 ============================================================================================
 */
+
+#define _VTX2HALFFACET_MAPPING_CC
 
 /***************************************************************************************/
 /* half-facet data */
@@ -67,7 +69,7 @@ struct HalfFacetType
     // check for NULL
     inline bool Is_Null() const
     {
-        if (ci==NULL_IND || fi==NULL_IND)
+        if (ci==NULL_Cell || fi==NULL_Small)
             return true;
         else
             return false;
@@ -87,10 +89,18 @@ struct HalfFacetType
     }
     inline HalfFacetType& Set()
     {
-        ci = NULL_IND;
-        fi = NULL_IND;
+        ci = NULL_Cell;
+        fi = NULL_Small;
         return *this;
     }
+	// simple print command
+	inline void Print() const
+	{
+		if (Is_Null())
+			std::cout << "<" << "-" << "," << "-" << ">";
+		else
+			std::cout << "<" << ci << "," << fi << ">";
+	};
 };
 
 /***************************************************************************************/
@@ -115,7 +125,7 @@ struct VtxHalfFacetType
     // check for NULL
     inline bool Is_Null() const
     {
-        if (vtx==NULL_IND || ci==NULL_IND || fi==NULL_IND)
+        if (vtx==NULL_Vtx || ci==NULL_Cell || fi==NULL_Small)
             return true;
         else
             return false;
@@ -136,15 +146,32 @@ struct VtxHalfFacetType
     }
     inline VtxHalfFacetType& Set()
     {
-        vtx = NULL_IND;
-        ci  = NULL_IND;
-        fi  = NULL_IND;
+        vtx = NULL_Vtx;
+        ci  = NULL_Cell;
+        fi  = NULL_Small;
         return *this;
     }
-	// inline bool operator == (const VtxHalfFacetType& vhf) const
-    // {
-        // return Equal(vhf);
-    // }
+	// simple print command
+	inline void Print() const
+	{
+		if (Is_Null())
+		{
+			std::cout << "Vtx# " << "NULL" << ": ";
+			std::cout << "<" << "-" << "," << "-" << ">";
+		}
+		else
+		{
+			std::cout << "Vtx# " << vtx << ": ";
+			std::cout << "<" << ci << ", " << fi << ">";
+		}
+	};
+	inline void Print_Halffacet() const
+	{
+		if (Is_Null())
+			std::cout << "<" << "-" << "," << "-" << ">";
+		else
+			std::cout << "<" << ci << ", " << fi << ">";
+	};
 };
 
 /* C++ class definition */
@@ -352,13 +379,13 @@ unsigned int V2HF::Get_Half_Facets(const VtxIndType& vi, std::vector<HalfFacetTy
 /***************************************************************************************/
 /* display half-facets attached to a given vertex.
    Note: you must run Sort() before using this! */
-void V2HF::Display_Half_Facets(const VtxIndType& vi=NULL_IND) const
+void V2HF::Display_Half_Facets(const VtxIndType& vi=NULL_Vtx) const
 {
-    if (vi==NULL_IND) // assume we want all the half-facet(s) for all the stored vertices
+    if (vi==NULL_Vtx) // assume we want all the half-facet(s) for all the stored vertices
     {
         std::vector<VtxHalfFacetType>::const_iterator it = VtxMap.begin();
         VtxIndType Prev_Vtx, Current_Vtx;
-        Prev_Vtx = NULL_IND; // init
+        Prev_Vtx = NULL_Vtx; // init
         std::cout << "Vertex and attached half-facets, <cell index, local facet index>:";
         while (it!=VtxMap.end())
         {
@@ -368,14 +395,14 @@ void V2HF::Display_Half_Facets(const VtxIndType& vi=NULL_IND) const
             {
                 // found a new vertex
                 std::cout << std::endl;
-                std::cout << "Vtx# " << Current_Vtx << ": ";
-                std::cout << "<" << (*it).ci << ", " <<  (*it).fi << ">";
+				(*it).Print();
                 Prev_Vtx = Current_Vtx; // update
             }
             else if (Current_Vtx==Prev_Vtx) // still with the same vertex
             {
                 // print the current half-facet
-                std::cout << ", <" << (*it).ci << ", " <<  (*it).fi << ">";
+				std::cout << ", ";
+				(*it).Print_Halffacet();
             }
             ++it; // go to the next half-facet
         }
@@ -386,8 +413,13 @@ void V2HF::Display_Half_Facets(const VtxIndType& vi=NULL_IND) const
         Get_Half_Facets(vi, HF1);
         std::cout << std::endl;
         std::cout << "Half-facets <cell index, local facet index> attached to Vtx# " << vi << ":" << std::endl;
-        for (VtxIndType kk = 0; kk < HF1.size(); kk++)
-            std::cout << "<" << HF1[kk].ci << ", " <<  HF1[kk].fi << ">, ";
+		std::vector<HalfFacetType>::const_iterator it;
+		for (it = HF1.begin(); it!=HF1.end()-1; ++it)
+		{
+			(*it).Print();
+			std::cout << ", ";
+		}
+		HF1.back().Print(); // print the last one!
     }
     std::cout << std::endl;
 }

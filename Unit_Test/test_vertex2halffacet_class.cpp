@@ -4,11 +4,12 @@
 
    This example tests the Vtx2HalfFacet_Mapping class.
 
-   Copyright (c) 11-18-2015,  Shawn W. Walker
+   Copyright (c) 12-08-2016,  Shawn W. Walker
 ============================================================================================
 */
 
-#include "../src_code/TriMesh.cc"
+#include "../src_code/Prelim.h"
+#include "../src_code/Vtx2HalfFacet_Mapping.cc"
 
 using namespace std;
 
