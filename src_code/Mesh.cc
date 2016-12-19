@@ -82,7 +82,7 @@
    Note: in this example, only need one adjacent half-edge because there are no
          non-manifold vertices.  But we do allow for non-manifold vertices!
 
-   Copyright (c) 12-09-2016,  Shawn W. Walker
+   Copyright (c) 12-17-2016,  Shawn W. Walker
 ============================================================================================
 */
 
@@ -97,13 +97,19 @@
 
 /* C++ class definition */
 #define  MMC  Mesh
-// template the geometric dimension (of the vertex coordinates)
+// template the topological and geometric dimension
 template <SmallIndType CELL_DIM, SmallIndType GEO_DIM>
 class MMC: public BaseMesh<CELL_DIM>, public BasePtCoord<GEO_DIM>
 {
 public:
     MMC();
     ~MMC();
+
+    void Clear() // clear all data
+    {
+        BaseMesh<CELL_DIM>::Clear();
+        BasePtCoord<GEO_DIM>::Clear();
+    };
 
 private:
 
@@ -114,14 +120,15 @@ private:
 template <SmallIndType CELL_DIM, SmallIndType GEO_DIM>
 MMC<CELL_DIM, GEO_DIM>::MMC() : BaseMesh<CELL_DIM>(), BasePtCoord<GEO_DIM>()
 {
-	// what else to do or check?
-	if (GEO_DIM < CELL_DIM)
-	{
-		std::cout << "Desired topological dimension of a cell is " << CELL_DIM << std::endl;
-		std::cout << "Desired geometric dimension is " << GEO_DIM << std::endl;
-		std::cout << "Geometric dimension must be >= topological dimension!" << std::endl;
-		std::exit(1);
-	}
+    // what else to do or check?
+    if (GEO_DIM < CELL_DIM)
+    {
+        std::cout << "Desired topological dimension of a cell is " << CELL_DIM << std::endl;
+        std::cout << "Desired geometric dimension is " << GEO_DIM << std::endl;
+        std::cout << "Geometric dimension must be >= topological dimension!" << std::endl;
+        std::exit(1);
+    }
+    //std::cout << "Mesh constructor..." << std::endl;
 }
 
 /***************************************************************************************/
@@ -129,26 +136,35 @@ MMC<CELL_DIM, GEO_DIM>::MMC() : BaseMesh<CELL_DIM>(), BasePtCoord<GEO_DIM>()
 template <SmallIndType CELL_DIM, SmallIndType GEO_DIM>
 MMC<CELL_DIM, GEO_DIM>::~MMC()
 {
-    // clear the data
-	BaseMesh<CELL_DIM>::Clear();
-    BasePtCoord<GEO_DIM>::Clear();
+    //std::cout << "Mesh destructor..." << std::endl;
 }
 
+// SWW: the only methods that go here are the ones that require BOTH cell connectivity
+//      *and* vertex coordinates.
 
+// need to "open" and "close" the cells/coordinates for appending and such...
 
+// need adaptive refinement
 
-// need to "open" and "close" the cells and coordinates for appending and such...
-
-// eventually, need refinement
-
-// don't worry about modifying the structure yet, b/c this is connected to refinement
+// don't worry about modifying the cell data structure yet, b/c this is connected to refinement
 
 // need topological/connectivity changes!!!!  for this, in 3-D, can think of an edge as the intersection of two half-facets?
 
-// for my mesh generator, need to evaluate cut edges. can do this by first finding all intersected tetrahedra.  then make an edge mesh from that?
-// or just store all the unique edges of the mesh?  think of the edge mesh as a graph!  Store each edge as a pair of vertices (with smallest global index first) and the cell that the edge belongs to.
+// For my mesh generator, need to evaluate cut edges. can do this by first finding all intersected tetrahedra.  then make an edge mesh from that?
+// Or just store all the unique edges of the mesh?  think of the edge mesh as a graph!  Store each edge as a pair of vertices (with smallest global index first) and the cell that the edge belongs to.
 
+// add these methods:
 
+/*
+barycentricToCartesian - Converts the coordinates of a point from Barycentric to Cartesian
+cartesianToBarycentric - Converts the coordinates of a point from Cartesian to Barycentric
+barycenter             - Barycenter of triangle or tetrahedron
+circumcenter           - Circumcenter of triangle or tetrahedron
+faceNormal             - Triangulation face normal
+featureEdges           - Triangulation sharp edges
+incenter               - Incenter of triangle or tetrahedron
+vertexNormal           - Triangulation vertex normal
+*/
 
 #undef MMC
 
