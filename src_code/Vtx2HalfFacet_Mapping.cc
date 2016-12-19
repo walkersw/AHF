@@ -44,7 +44,7 @@
    where <Ti,Ei> is a half-edge attached to Vi, where Ti (the cell index) and
    Ei (the local edge index) define the particular half-edge.
 
-   Copyright (c) 12-08-2016,  Shawn W. Walker
+   Copyright (c) 12-15-2016,  Shawn W. Walker
 ============================================================================================
 */
 
@@ -93,14 +93,14 @@ struct HalfFacetType
         fi = NULL_Small;
         return *this;
     }
-	// simple print command
-	inline void Print() const
-	{
-		if (Is_Null())
-			std::cout << "<" << "-" << "," << "-" << ">";
-		else
-			std::cout << "<" << ci << "," << fi << ">";
-	};
+    // simple print command
+    inline void Print() const
+    {
+        if (Is_Null())
+            std::cout << "<" << "-" << "," << "-" << ">";
+        else
+            std::cout << "<" << ci << "," << fi << ">";
+    };
 };
 
 /***************************************************************************************/
@@ -151,27 +151,27 @@ struct VtxHalfFacetType
         fi  = NULL_Small;
         return *this;
     }
-	// simple print command
-	inline void Print() const
-	{
-		if (Is_Null())
-		{
-			std::cout << "Vtx# " << "NULL" << ": ";
-			std::cout << "<" << "-" << "," << "-" << ">";
-		}
-		else
-		{
-			std::cout << "Vtx# " << vtx << ": ";
-			std::cout << "<" << ci << ", " << fi << ">";
-		}
-	};
-	inline void Print_Halffacet() const
-	{
-		if (Is_Null())
-			std::cout << "<" << "-" << "," << "-" << ">";
-		else
-			std::cout << "<" << ci << ", " << fi << ">";
-	};
+    // simple print command
+    inline void Print() const
+    {
+        if (Is_Null())
+        {
+            std::cout << "Vtx# " << "NULL" << ": ";
+            std::cout << "<" << "-" << "," << "-" << ">";
+        }
+        else
+        {
+            std::cout << "Vtx# " << vtx << ": ";
+            std::cout << "<" << ci << ", " << fi << ">";
+        }
+    };
+    inline void Print_Halffacet() const
+    {
+        if (Is_Null())
+            std::cout << "<" << "-" << "," << "-" << ">";
+        else
+            std::cout << "<" << ci << ", " << fi << ">";
+    };
 };
 
 /* C++ class definition */
@@ -277,15 +277,15 @@ void V2HF::Append(const VtxHalfFacetType& in)
 /* sort the <vertex, half-facet> list. */
 bool VtxMap_order (const VtxHalfFacetType& Va, const VtxHalfFacetType& Vb)
 {
-	if (Va.vtx==Vb.vtx)
-	{
-		if (Va.ci==Vb.ci)
-			return (Va.fi < Vb.fi); 
-		else
-			return (Va.ci < Vb.ci);
-	}
-	else
-		return (Va.vtx < Vb.vtx);
+    if (Va.vtx==Vb.vtx)
+    {
+        if (Va.ci==Vb.ci)
+            return (Va.fi < Vb.fi);
+        else
+            return (Va.ci < Vb.ci);
+    }
+    else
+        return (Va.vtx < Vb.vtx);
 }
 // (SWW) Note: code can be made ~%7 faster if VtxMap_order is simplified to "return (Va.vtx < Vb.vtx);"
 void V2HF::Sort()
@@ -395,14 +395,14 @@ void V2HF::Display_Half_Facets(const VtxIndType& vi=NULL_Vtx) const
             {
                 // found a new vertex
                 std::cout << std::endl;
-				(*it).Print();
+                (*it).Print();
                 Prev_Vtx = Current_Vtx; // update
             }
             else if (Current_Vtx==Prev_Vtx) // still with the same vertex
             {
                 // print the current half-facet
-				std::cout << ", ";
-				(*it).Print_Halffacet();
+                std::cout << ", ";
+                (*it).Print_Halffacet();
             }
             ++it; // go to the next half-facet
         }
@@ -413,13 +413,13 @@ void V2HF::Display_Half_Facets(const VtxIndType& vi=NULL_Vtx) const
         Get_Half_Facets(vi, HF1);
         std::cout << std::endl;
         std::cout << "Half-facets <cell index, local facet index> attached to Vtx# " << vi << ":" << std::endl;
-		std::vector<HalfFacetType>::const_iterator it;
-		for (it = HF1.begin(); it!=HF1.end()-1; ++it)
-		{
-			(*it).Print();
-			std::cout << ", ";
-		}
-		HF1.back().Print(); // print the last one!
+        std::vector<HalfFacetType>::const_iterator it;
+        for (it = HF1.begin(); it!=HF1.end()-1; ++it)
+        {
+            (*it).Print();
+            std::cout << ", ";
+        }
+        HF1.back().Print(); // print the last one!
     }
     std::cout << std::endl;
 }
@@ -459,6 +459,8 @@ void V2HF::Display_Unique_Vertices() const
     }
     std::cout << std::endl;
 }
+
+// SWW: this class seems to be complete now...
 
 #undef V2HF
 
