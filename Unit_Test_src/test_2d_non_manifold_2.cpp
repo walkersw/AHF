@@ -20,8 +20,13 @@ int main()
     // init output code
     int OUTPUT_CODE = 0; // 0 indicates success, 1 is failure
 
-    // create the object
-    SurfaceMesh  TM;
+    // create the object: manifold 2-D surface mesh example
+    SurfaceMesh(MultiMesh);
+    // Mesh<3>  MultiMesh(0,1,0); // alternative
+    
+    // access the parts we need
+    BaseMesh<2>& TM = MultiMesh.TriMesh[0];
+    BasePtCoord<3>& VX = MultiMesh.Vtx;
 
     // non-manifold 2-D mesh example
     TM.Reserve_Cells(7);
@@ -34,21 +39,21 @@ int main()
     TM.Append_Cell(8,9,5);
 
     // now add the vertex point coordinates
-    TM.Init_Points(10);
-    TM.Set_Coord(0, -0.5, 0.0,-1.0);
-    TM.Set_Coord(1, -1.0, 0.0, 0.0);
-    TM.Set_Coord(2, -0.5, 1.0, 0.0);
-    TM.Set_Coord(3, -0.5, 0.0, 1.0);
-    TM.Set_Coord(4, -0.5,-1.0, 0.0);
-    TM.Set_Coord(5,  0.0, 0.0, 0.0);
-    TM.Set_Coord(6,  0.5, 0.2, 1.0);
-    TM.Set_Coord(7,  0.5,-0.1,-1.0);
-    TM.Set_Coord(8,  0.5,-1.0, 0.0);
-    TM.Set_Coord(9,  1.0, 0.0, 0.0);
+    VX.Init_Points(10);
+    VX.Set_Coord(0, -0.5, 0.0,-1.0);
+    VX.Set_Coord(1, -1.0, 0.0, 0.0);
+    VX.Set_Coord(2, -0.5, 1.0, 0.0);
+    VX.Set_Coord(3, -0.5, 0.0, 1.0);
+    VX.Set_Coord(4, -0.5,-1.0, 0.0);
+    VX.Set_Coord(5,  0.0, 0.0, 0.0);
+    VX.Set_Coord(6,  0.5, 0.2, 1.0);
+    VX.Set_Coord(7,  0.5,-0.1,-1.0);
+    VX.Set_Coord(8,  0.5,-1.0, 0.0);
+    VX.Set_Coord(9,  1.0, 0.0, 0.0);
 
     // now display coordinates
     cout << endl;
-    TM.Display_Vtx_Coord();
+    VX.Display_Vtx_Coord();
 
     // we now stop adding cells
     TM.Finalize_v2hfs_DEBUG();

@@ -21,7 +21,12 @@ int main()
     int OUTPUT_CODE = 0; // 0 indicates success, 1 is failure
 
     // create the object: manifold 2-D mesh example
-    TriMesh  TM;
+    TriMesh(MultiMesh);
+    // Mesh<2>  MultiMesh(0,1,0); // alternative
+    
+    // access the parts we need
+    BaseMesh<2>& TM = MultiMesh.TriMesh[0];
+    BasePtCoord<2>& VX = MultiMesh.Vtx;
 
     // define the cell connectivity
     TM.Reserve_Cells(4);
@@ -31,16 +36,16 @@ int main()
     TM.Append_Cell(3,0,4);
 
     // now add the vertex point coordinates
-    TM.Init_Points(5);
-    TM.Set_Coord(0, 0.0,0.0);
-    TM.Set_Coord(1, 1.0,0.0);
-    TM.Set_Coord(2, 1.0,1.0);
-    TM.Set_Coord(3, 0.0,1.0);
-    TM.Set_Coord(4, 0.5,0.5);
+    VX.Init_Points(5);
+    VX.Set_Coord(0, 0.0,0.0);
+    VX.Set_Coord(1, 1.0,0.0);
+    VX.Set_Coord(2, 1.0,1.0);
+    VX.Set_Coord(3, 0.0,1.0);
+    VX.Set_Coord(4, 0.5,0.5);
 
     // now display coordinates
     cout << endl;
-    TM.Display_Vtx_Coord();
+    VX.Display_Vtx_Coord();
 
     // we now stop adding cells and coordinates
     TM.Finalize_v2hfs_DEBUG();

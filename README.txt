@@ -49,7 +49,7 @@ To compile and run the object files, do the following:
 
 The actual compiling commands can be found in "makefile".
 
-4(b): Open a terminal window in a "Demo" sub-directory of interest.
+4(b): Open a terminal window in the "Demo" sub-directory of interest.
 
 - Compile: run "./Linux_Make_Demos.sh" at the bash prompt. (make sure you have execute permissions enabled for this script file.)
 - Run: run "./Linux_Run_Demos.sh" to execute the object files. (make sure you have execute permissions enabled for this script file.)

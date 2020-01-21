@@ -1,7 +1,9 @@
 
 -----------------------------------------------------------
 
-Version 0.1.0   (xx Dec  2016) - Extended the functionality of the Mesh class; more modular, some more methods.  Added a "Mesh_IO_VTK" class for reading and writing meshes to ASCII and binary files in .vtk format.  Added one demo.
+Version 0.1.1   (21 Jan  2020) - Changed the functionality of the Mesh class (and related things); this will be more flexible for dealing with multi-dimensional meshes (although the user interface is slightly more involved).
+
+Version 0.1.0   (01 Dec  2016) - Extended the functionality of the Mesh class; more modular, some more methods.  Added a "Mesh_IO_VTK" class for reading and writing meshes to ASCII and binary files in .vtk format.  Added one demo.
 
 Version 0.0.2   (09 Dec  2016) - Made several low level modifications, added a BasePtCoord class to store vertex coordinates.  Changed *all* indexing to be 0-based! (This was a pain.)
 

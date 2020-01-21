@@ -2,6 +2,12 @@
 ============================================================================================
    Interface (abstract) class for AHF Mesh class (of any dimensions).
 
+Why did I do it like this?  Just have Mesh inherit from BaseMesh, and it will have an additional member variable "Points".
+
+You did it so Mesh_Open could be used by BaseMesh and BasePtCoord.
+
+But you can re-define Open in Mesh so that it affects the Mesh_Open sub-field of Points.
+
    Copyright (c) 12-17-2016,  Shawn W. Walker
 ============================================================================================
 */
@@ -11,6 +17,8 @@
 #ifndef _PRELIM_H
 #include "Prelim.h"  // simple typedefs, etc...
 #endif
+
+NOT USED!!!!
 
 #ifdef _WIN32
 /* 'class1' : inherits 'class2::member' via dominance */
@@ -84,7 +92,7 @@ public:
            correct information, i.e. the mesh should be "closed" and all internal
            data structures updated. This is done by building the sibling half-facet
            structure, and filling out the Vtx2HalfFacets mapping. All of this is
-           automatically done by the "Close" method. */
+           automatically done by the "Finalize_Mesh_Connectivity" method. */
 
     // return const reference to v2hfs (an intermediate, internal data structure)
     virtual const Vtx2HalfFacet_Mapping& Get_v2hfs() const = 0;

@@ -1,6 +1,6 @@
 /*
 ============================================================================================
-   Class for storing a vector of point coordinates.
+   Class for storing a vector of point coordinates.  Meant to work with BaseMesh.
 
    Note: Everything is indexed starting at 0!
 
@@ -18,22 +18,39 @@
 #include "BasicStructs.h" // basic structs for the BasePtCoord class
 #endif
 
-#ifndef _MESHINTERFACE_CC
-#include "MeshInterface.cc"  // generic (dimension independent) interface class for Mesh
-#endif
+// #ifndef _MESHINTERFACE_CC
+// #include "MeshInterface.cc"  // generic (dimension independent) interface class for Mesh
+// #endif
 
- /* C++ class definition */
+/* C++ class definition */
 #define  BPC  BasePtCoord
 // template the geometric dimension (of the vertex coordinates)
 template <SmallIndType GEO_DIM>
-class BPC: public virtual MeshInterface
+class BPC
 {
 public:
     BPC();
     ~BPC();
+
+    // open Point for modification
+    inline void Open() { Point_Open = true; };
+    // close Point; modification is no longer allowed
+    inline void Close() { Point_Open = false; };
+    // generic check for if mesh is open for modification
+    inline bool Is_Point_Open() const
+    {
+        if (!Point_Open)
+        {
+            std::cout << "Point is not open for modification!" << std::endl;
+            std::cout << "     You must first use the 'Open' method." << std::endl;
+        }
+        return Point_Open;
+    };
+
     void Clear() // clear all data
     {
         Point.clear();
+        Point_Open = true; // re-open Point for modification
     };
 
     // get the topological dimension
@@ -68,13 +85,20 @@ protected:
 
     double   Point_Reserve_Buffer; // amount of extra memory to allocate when re-allocating
                                    // Point
+
+    /* flag to indicate if points may be added or changed.
+       true  = point coordinates may be changed, etc.
+       false = the points cannot be changed! */
+    bool Point_Open;
 };
 
 /***************************************************************************************/
 /* constructor */
 template <SmallIndType GEO_DIM>
-BPC<GEO_DIM>::BPC() : MeshInterface()
+BPC<GEO_DIM>::BPC()
 {
+    Point_Open = true; // Point starts out as open for modification
+
     // ensure memory is clear to start
     Clear();
     Point_Reserve_Buffer = 0.2; // allocate an extra 20% when re-allocating vertex coordinates
@@ -98,7 +122,7 @@ BPC<GEO_DIM>::~BPC()
 template <SmallIndType GEO_DIM>
 void BPC<GEO_DIM>::Reserve_Points(const VtxIndType& Num_Pts)
 {
-    if (!Is_Mesh_Open())
+    if (!Is_Point_Open())
         return;
 
     // compute the actual size to allocate for the points
@@ -112,7 +136,7 @@ void BPC<GEO_DIM>::Reserve_Points(const VtxIndType& Num_Pts)
 template <SmallIndType GEO_DIM>
 void BPC<GEO_DIM>::Init_Points(const VtxIndType& Num_Pts)
 {
-    if (!Is_Mesh_Open())
+    if (!Is_Point_Open())
         return;
 
     VtxCoord_DIM Zero_Pt;
@@ -120,6 +144,8 @@ void BPC<GEO_DIM>::Init_Points(const VtxIndType& Num_Pts)
 
     if (Point.capacity() < Num_Pts)
         Reserve_Points(Num_Pts);
+    else
+        Point.resize(Num_Pts);
 	
 	typename std::vector<VtxCoord_DIM>::iterator it;
     it = Point.begin();
@@ -131,7 +157,7 @@ void BPC<GEO_DIM>::Init_Points(const VtxIndType& Num_Pts)
 template <SmallIndType GEO_DIM>
 void BPC<GEO_DIM>::Set_Coord(const VtxIndType& vi, const PointType* vtx_coord)
 {
-    if (!Is_Mesh_Open())
+    if (!Is_Point_Open())
         return;
 
     assert( vi < Num_Points() );
@@ -142,7 +168,7 @@ template <SmallIndType GEO_DIM>
 void BPC<GEO_DIM>::Set_Coord(const VtxIndType& vi,
                              const PointType& x0)
 {
-    if (!Is_Mesh_Open())
+    if (!Is_Point_Open())
         return;
 
     assert( vi < Num_Points() );
@@ -153,7 +179,7 @@ template <SmallIndType GEO_DIM>
 void BPC<GEO_DIM>::Set_Coord(const VtxIndType& vi,
                              const PointType& x0, const PointType& x1)
 {
-    if (!Is_Mesh_Open())
+    if (!Is_Point_Open())
         return;
 
     assert( vi < Num_Points() );
@@ -164,7 +190,7 @@ template <SmallIndType GEO_DIM>
 void BPC<GEO_DIM>::Set_Coord(const VtxIndType& vi,
                              const PointType& x0, const PointType& x1, const PointType& x2)
 {
-    if (!Is_Mesh_Open())
+    if (!Is_Point_Open())
         return;
 
     assert( vi < Num_Points() );
@@ -177,7 +203,7 @@ void BPC<GEO_DIM>::Set_Coord(const VtxIndType& vi,
 template <SmallIndType GEO_DIM>
 inline PointType* BPC<GEO_DIM>::Get_Point_coord(const VtxIndType& vi) // writeable
 {
-    if (!Is_Mesh_Open())
+    if (!Is_Point_Open())
     {
         std::cerr << "Fatal error in 'Get_Point_coord'!" << std::endl;
         std::cerr << "     Mesh is not 'open' for writing." << std::endl;
@@ -193,7 +219,7 @@ inline PointType* BPC<GEO_DIM>::Get_Point_coord(const VtxIndType& vi) // writeab
 template <SmallIndType GEO_DIM>
 inline CoordType& BPC<GEO_DIM>::Get_Point(const VtxIndType& vi) // writeable
 {
-    if (!Is_Mesh_Open())
+    if (!Is_Point_Open())
     {
         std::cerr << "Fatal error in 'Get_Point'!" << std::endl;
         std::cerr << "     Mesh is not 'open' for writing." << std::endl;

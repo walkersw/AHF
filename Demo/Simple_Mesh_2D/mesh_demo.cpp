@@ -20,7 +20,12 @@ int main()
     int OUTPUT_CODE = 0; // 0 indicates success, 1 is failure
 
     // create the object: a 2-D mesh in \R^2 (the x-y plane)
-    TriMesh  TM;
+    TriMesh(MultiMesh);
+    // Mesh<2>  MultiMesh(0,1,0); // alternative
+    
+    // access the parts we need
+    BaseMesh<2>& TM = MultiMesh.TriMesh[0];
+    BasePtCoord<2>& VX = MultiMesh.Vtx;
 
     // define the cell connectivity (4 cells)
     TM.Reserve_Cells(4);
@@ -30,21 +35,21 @@ int main()
     TM.Append_Cell(3,0,4);
 
     // now add the vertex point coordinates (5 vertices)
-    TM.Init_Points(5);
-    TM.Set_Coord(0, 0.0,0.0);
-    TM.Set_Coord(1, 1.0,0.0);
-    TM.Set_Coord(2, 1.0,1.0);
-    TM.Set_Coord(3, 0.0,1.0);
-    TM.Set_Coord(4, 0.5,0.5);
+    VX.Init_Points(5);
+    VX.Set_Coord(0, 0.0,0.0);
+    VX.Set_Coord(1, 1.0,0.0);
+    VX.Set_Coord(2, 1.0,1.0);
+    VX.Set_Coord(3, 0.0,1.0);
+    VX.Set_Coord(4, 0.5,0.5);
+
+    // display coordinates
+    VX.Display_Vtx_Coord();
 
 	// note: mesh is a square composed of 4 triangles
 	
-	// build internal connectivity information
-	TM.Finalize_Mesh_Connectivity();
-	
-    // now display coordinates
+	// now build internal connectivity information
     cout << endl;
-    TM.Display_Vtx_Coord();
+	TM.Finalize_Mesh_Connectivity();
 	
 	// and display cell connectivity data
     cout << endl;

@@ -3,8 +3,8 @@
    Base class for array based half-facet (AHF) data structure to store and process meshes.
 
    Note: this base class is used in deriving the 1-D, 2-D, and 3-D mesh classes,
-   as well as higher dimensions.
-   Note: no vertex coordinates are stored in this class.
+   as well as arbitrarily higher dimensions.
+   Note: no vertex coordinates are stored in this class; this is purely topological.
    Note: everything is indexed from 0!
 
    Copyright (c) 12-17-2016,  Shawn W. Walker
@@ -24,20 +24,35 @@
 #include "BasicStructs.h" // basic structs for the BaseMesh class
 #endif
 
-#ifndef _MESHINTERFACE_CC
-#include "MeshInterface.cc"  // generic (dimension independent) interface class for Mesh
-#endif
+// #ifndef _MESHINTERFACE_CC
+// #include "MeshInterface.cc"  // generic (dimension independent) interface class for Mesh
+// #endif
 
 /* C++ class definition */
 #define  BM  BaseMesh
 // template the cell topological dimension
 // Note: the number of cell facets equals top. dim. + 1
 template <SmallIndType CELL_DIM>
-class BM: public virtual MeshInterface
+class BM
 {
 public:
     BM();
     ~BM();
+    // open the mesh for modification
+    inline void Open() { Mesh_Open = true; };
+    // close the mesh; modification is no longer allowed
+    inline void Close() { Mesh_Open = false; };
+    // generic check for if mesh is open for modification
+    inline bool Is_Mesh_Open() const
+    {
+        if (!Mesh_Open)
+        {
+            std::cout << "Mesh is not open for modification!" << std::endl;
+            std::cout << "     You must first use the 'Open' method." << std::endl;
+        }
+        return Mesh_Open;
+    };
+
     void Clear() // clear all data
     {
         Cell.clear();
@@ -46,6 +61,7 @@ public:
 
         Mesh_Open = true; // re-open the mesh for modification
     };
+
     // get the topological dimension
     inline SmallIndType Top_Dim() const { return CELL_DIM; };
     // allocate room for specified number of elements
@@ -87,7 +103,7 @@ public:
            correct information, i.e. the mesh should be "closed" and all internal
            data structures updated. This is done by building the sibling half-facet
            structure, and filling out the Vtx2HalfFacets mapping. All of this is
-           automatically done by the "Close" method. */
+           automatically done by the "Finalize_Mesh_Connectivity" method. */
 
     // return const reference to v2hfs (an intermediate, internal data structure)
     const Vtx2HalfFacet_Mapping& Get_v2hfs() const { const Vtx2HalfFacet_Mapping& c_v2hfs = v2hfs; return c_v2hfs; };
@@ -179,6 +195,11 @@ protected:
     //       will never be referenced (for example).  This is an internal structure that
     //       is only used to construct the sibling half-facet information (stored in Cell).
 
+    /* flag to indicate if mesh cells may be added or modified.
+       true  = cells can be added, modified
+       false = the mesh cells cannot be changed! */
+    bool Mesh_Open;
+
     // internal cell struct access
     inline CellSimplex_DIM& Get_Cell_struct(const CellIndType&); // for writeable
     inline const CellSimplex_DIM& Get_Cell_struct(const CellIndType&) const; // for read-only
@@ -233,8 +254,10 @@ private:
 /***************************************************************************************/
 /* constructor */
 template <SmallIndType CELL_DIM>
-BM<CELL_DIM>::BM () : MeshInterface()
+BM<CELL_DIM>::BM ()
 {
+    Mesh_Open = true; // the mesh starts out as open for modification
+
     Cell_Reserve_Buffer = 0.2; // allocate an extra 20% when re-allocating
     Estimate_Size_Vtx2HalfFacets = 0;
     // ensure memory is clear to start
@@ -1687,6 +1710,8 @@ inline bool BM<CELL_DIM>::Adj_Vertices_In_Facet_Equal(const VtxIndType* a, const
 }
 
 /* TODO */
+
+// need to do a uniform hierarchical mesh refinement implementation
 
 // need a multi-dim mesh manager, that can store sub-domains (cells), etc... and that can find sub-domain embeddings...
 

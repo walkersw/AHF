@@ -1,0 +1,303 @@
+/*
+============================================================================================
+   Class for mapping from a given vertex index to (several) incident half-edges.
+   Note: this uses the C++ std::multimap.
+
+   EXAMPLE:
+
+      Diagram depicting half-edges:
+
+                   <2,1>
+        V4 +-------------------+ V3
+           |\                  |
+           |  \          T2    |
+           |    \              |
+           |      \  <2,2>     |
+     <1,2> |        \          | <2,3>
+           |    <1,1> \        |
+           |            \      |
+           |              \    |
+           |     T1         \  |
+           |                  \|
+        V1 +-------------------+ V2
+                   <1,3>
+
+   Triangle Connectivity:
+
+   triangle |   vertices
+    indices |  V1, V2, V3
+   ---------+--------------
+       1    |   1,  2,  4
+       2    |   2,  3,  4
+
+   Half-Edges attached to vertices:
+
+       Vertex V1:  V1--><1,2>
+                   V1--><1,3>
+       Vertex V2:  V2--><1,3>
+                   V2--><1,1>
+                   V2--><2,2>
+                   V2--><2,3>
+       etc...
+
+   where <ti,ei> is a half-edge attached to V1, where ti and ei define the particular
+   half-edge.
+
+   Copyright (c) 10-16-2015,  Shawn W. Walker
+============================================================================================
+*/
+
+/* C++ class definition */
+#define  V2HE  Vtx2HalfEdge
+class V2HE
+{
+public:
+    V2HE();
+    ~V2HE();
+    void Clear() { VtxMap.clear(); };
+    // get number of (referenced) vertices
+    VtxIndType Num_Vtx() const
+    {
+        return (VtxIndType) VtxMap.size();
+    };
+	void Reserve_v2hes(const VtxIndType&);
+	
+    // insert <vertex,half-edge> pair
+    void Insert(const VtxIndType&, const HalfEdgeType&);
+    void Insert(const std::multimap<VtxIndType,HalfEdgeType>::iterator&, const VtxIndType&, const HalfEdgeType&);
+    void Insert2(const VtxIndType&, const HalfEdgeType&);
+	void Insert(const VtxHalfEdgeType&);
+    // find one half-edge attached to the given vertex
+    void Get_Half_Edge(const VtxIndType&, std::multimap<VtxIndType,HalfEdgeType>::iterator&);
+    void Get_Half_Edge(const VtxIndType&, HalfEdgeType&);
+    // find all half-edges
+    void Get_Half_Edges(const VtxIndType&, std::pair <std::multimap<VtxIndType,HalfEdgeType>::iterator,
+                                                      std::multimap<VtxIndType,HalfEdgeType>::iterator>&);
+    void Get_Half_Edges(const VtxIndType&, std::vector<HalfEdgeType>&);
+
+	// print out the half-edges attached to given vertex
+	void Display_Half_Edges(const VtxIndType&);
+    // get a vector of *unique* vertices from the Vtx2HalfEdge data
+    void Get_Unique_Vertices();
+
+    // map from vertices to adjacent half edges
+    std::multimap<VtxIndType,HalfEdgeType> VtxMap; // with duplicate vertices!
+
+//private:
+
+	/* temp variable to collect "mappings" from vertices to half-edges.
+       note: the same vertex can appear multiple times, but with different
+	         half-edges. */
+	std::vector<VtxHalfEdgeType> v2hes;
+	double  Reserve_Buffer;
+	
+	// then store the more compressed format, errr this is only useful if we have vertices 1 thru N
+	
+	// note: some of the routines above can only be used once things are sorted!
+	
+	// maybe store an internal flag to determine which storage is being used?
+	
+	//
+	
+};
+
+
+// // equal_range example
+// // equal_range example
+// #include <iostream>     // std::cout
+// #include <algorithm>    // std::equal_range, std::sort
+// #include <vector>       // std::vector
+
+// bool mygreater (int i,int j) { return (i>j); }
+
+// int main () {
+  // int myints[] = {10,20,30,30,20,10,10,20};
+  // std::vector<int> v(myints,myints+8);                         // 10 20 30 30 20 10 10 20
+  // std::pair<std::vector<int>::iterator,std::vector<int>::iterator> bounds;
+
+  // // using default comparison:
+  // std::sort (v.begin(), v.end());                              // 10 10 10 20 20 20 30 30
+  // bounds=std::equal_range (v.begin(), v.end(), 20);            //          ^        ^
+
+  // // using "mygreater" as comp:
+  // std::sort (v.begin(), v.end(), mygreater);                   // 30 30 20 20 20 10 10 10
+  // bounds=std::equal_range (v.begin(), v.end(), 20, mygreater); //       ^        ^
+
+  // std::cout << "bounds at positions " << (bounds.first - v.begin());
+  // std::cout << " and " << (bounds.second - v.begin()) << '\n';
+
+  // return 0;
+// }
+
+
+
+/***************************************************************************************/
+/* constructor */
+V2HE::V2HE()
+{
+    // ensure memory is clear to start
+    this->Clear();
+	Reserve_Buffer = 0.2;
+}
+
+/***************************************************************************************/
+/* DE-structor */
+V2HE::~V2HE()
+{
+    // clear the data
+    this->Clear();
+}
+
+/***************************************************************************************/
+/* Allocate memory to hold a bunch of vertex-to-half-edge structs of given size
+  (plus a little). */
+void V2HE::Reserve_v2hes(const VtxIndType& Num_Vtx)
+{
+    // compute the actual size to allocate
+    VtxIndType Actual_Vtx_SIZE = (VtxIndType) ((1.0 + Reserve_Buffer) * Num_Vtx);
+    v2hes.reserve(Actual_Vtx_SIZE);
+}
+
+/***************************************************************************************/
+/* insert a <vertex, half-edge> pair. */
+void V2HE::Insert2(const VtxIndType& vi, const HalfEdgeType& he)
+{
+	VtxHalfEdgeType TEMP;
+	TEMP.vtx = vi;
+	TEMP.halfedge = he;
+	const VtxIndType current_size = (VtxIndType) v2hes.size();
+	if (current_size == v2hes.capacity())
+		Reserve_v2hes(current_size);
+    v2hes.push_back(TEMP);
+}
+void V2HE::Insert(const VtxHalfEdgeType& in)
+{
+	const VtxIndType current_size = (VtxIndType) v2hes.size();
+	if (current_size == v2hes.capacity())
+		Reserve_v2hes(current_size);
+    v2hes.push_back(in);
+}
+
+// bool v2hes_order (VtxHalfEdgeType& Va, VtxHalfEdgeType& Vb) { return (Va.vtx < Vb.vtx); }
+
+// /***************************************************************************************/
+// /* sort the temporary <vertex, half-edge> list. */
+// void V2HE::Sort_v2hes(const VtxIndType& vi, const HalfEdgeType& he)
+// {
+	// //
+	// std::sort(v2hes.begin(), v2hes.end(), v2hes_order);
+// }
+
+
+
+/***************************************************************************************/
+/* insert a <vertex, half-edge> pair. */
+void V2HE::Insert(const VtxIndType& vi, const HalfEdgeType& he)
+{
+    VtxMap.insert(std::pair<VtxIndType,HalfEdgeType>(vi,he));
+}
+/* insert a <vertex, half-edge> pair (with hint!). */
+void V2HE::Insert(const std::multimap<VtxIndType,HalfEdgeType>::iterator& it, const VtxIndType& vi, const HalfEdgeType& he)
+{
+    VtxMap.insert(it, std::pair<VtxIndType,HalfEdgeType>(vi,he));
+}
+
+/***************************************************************************************/
+/* find a single half-edge attached to the given vertex. */
+void V2HE::Get_Half_Edge(const VtxIndType& vi, std::multimap<VtxIndType,HalfEdgeType>::iterator& it)
+{
+    it = VtxMap.find(vi);
+}
+/* find a single half-edge attached to the given vertex, and return half-edge. */
+void V2HE::Get_Half_Edge(const VtxIndType& vi, HalfEdgeType& he)
+{
+    const std::multimap<VtxIndType,HalfEdgeType>::iterator it = VtxMap.find(vi);
+    if (it!=VtxMap.end()) // found valid key
+        {
+        // copy over
+        he.ti = it->second.ti;
+        he.ei = it->second.ei;
+        }
+    else
+        {
+        // set to null value
+        he.ti = 0;
+        he.ei = 0;
+        }
+}
+
+/***************************************************************************************/
+/* find *all* half-edges attached to the given vertex. */
+void V2HE::Get_Half_Edges(const VtxIndType& vi, std::pair <std::multimap<VtxIndType,HalfEdgeType>::iterator,
+                                                           std::multimap<VtxIndType,HalfEdgeType>::iterator>& range)
+{
+    range = VtxMap.equal_range(vi);
+}
+/* find *all* half-edges attached to the given vertex, and return in a std::vector. */
+void V2HE::Get_Half_Edges(const VtxIndType& vi, std::vector<HalfEdgeType>& he)
+{
+    std::pair <std::multimap<VtxIndType,HalfEdgeType>::iterator, std::multimap<VtxIndType,HalfEdgeType>::iterator> range;
+    range = VtxMap.equal_range(vi);
+
+    he.clear(); // start clean!
+    if (!(range.first==range.second)) // key was found
+        {
+        //HalfEdgeType  he;
+        unsigned int COUNT = 0;
+        for (std::multimap<VtxIndType,HalfEdgeType>::iterator it=range.first; it!=range.second; ++it)
+            {
+            COUNT++;
+            const unsigned int current_capacity = (unsigned int) he.capacity();
+            if (COUNT > current_capacity)
+                he.reserve(current_capacity+5);
+            // append
+            he.push_back(it->second);
+            }
+        }
+    // else // key not found
+}
+
+/***************************************************************************************/
+/* display half-edges attached to given vertex. */
+void V2HE::Display_Half_Edges(const VtxIndType& vi)
+{
+	std::vector<HalfEdgeType> HE1;
+	Get_Half_Edges(vi, HE1);
+	for (VtxIndType kk = 0; kk < HE1.size(); kk++)
+		std::cout << "Vtx# " << vi << ", half-edge: <" << HE1[kk].ti << ", " <<  HE1[kk].ei << ">." << std::endl;
+}
+
+/***************************************************************************************/
+/* get unique list of vertices. Note: this just prints info out. */
+void V2HE::Get_Unique_Vertices()
+{
+    //
+    std::vector<VtxIndType> unique_vertices;
+    unique_vertices.reserve(this->Num_Vtx());
+
+    for (std::multimap<VtxIndType,HalfEdgeType>::iterator it=VtxMap.begin(); it!=VtxMap.end(); ++it)
+        {
+        unique_vertices.push_back(it->first);
+        }
+    //
+    std::vector<VtxIndType>::iterator it_end;
+    it_end = std::unique_copy(unique_vertices.begin(), unique_vertices.end(), unique_vertices.begin());
+    // get number of unique vertices
+    const VtxIndType LENGTH = std::distance(unique_vertices.begin(),it_end);
+    // resize
+    unique_vertices.resize(LENGTH);
+
+    // print out!!!
+    std::cout << "Unique list of vertices: " << std::endl;
+    for (std::vector<VtxIndType>::iterator it=unique_vertices.begin(); it!=unique_vertices.end(); ++it)
+        {
+        //
+        std::cout << (*it) << std::endl;
+        }
+}
+
+
+
+#undef V2HE
+
+/***/

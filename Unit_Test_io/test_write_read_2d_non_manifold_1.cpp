@@ -20,8 +20,13 @@ int main()
     // init output code
     int OUTPUT_CODE = 0; // 0 indicates success, 1 is failure
 
-    // define a simple surface mesh
-    SurfaceMesh  TM;
+    // create the object: manifold 2-D surface mesh example
+    SurfaceMesh(MultiMesh);
+    // Mesh<3>  MultiMesh(0,1,0); // alternative
+
+    // access the parts we need
+    BaseMesh<2>& TM = MultiMesh.TriMesh[0];
+    BasePtCoord<3>& VX = MultiMesh.Vtx;
 
     // non-manifold 2-D mesh example
     TM.Reserve_Cells(4);
@@ -31,32 +36,33 @@ int main()
     TM.Append_Cell(1,2,5);
 
     // now add the vertex point coordinates
-    TM.Init_Points(6);
-    TM.Set_Coord(0, -1.0, 0.5, 0.0);
-    TM.Set_Coord(1,  0.0, 0.0, 0.0);
-    TM.Set_Coord(2,  0.0, 1.0, 0.0);
-    TM.Set_Coord(3,  1.0, 0.5, 0.0);
-    TM.Set_Coord(4,  0.0, 0.5, 1.0);
-    TM.Set_Coord(5,  0.0, 0.5,-1.0);
+    VX.Init_Points(6);
+    VX.Set_Coord(0, -1.0, 0.5, 0.0);
+    VX.Set_Coord(1,  0.0, 0.0, 0.0);
+    VX.Set_Coord(2,  0.0, 1.0, 0.0);
+    VX.Set_Coord(3,  1.0, 0.5, 0.0);
+    VX.Set_Coord(4,  0.0, 0.5, 1.0);
+    VX.Set_Coord(5,  0.0, 0.5,-1.0);
 
     // create mesh writer
     Mesh_IO_VTK  MeshIO;
 
     // write the mesh data
-    MeshIO.Write_ASCII_VTK("test_non_manifold_mesh_ASCII.vtk", "simple non-manifold mesh", TM);
-    MeshIO.Write_Binary_VTK("test_non_manifold_mesh_BIN.vtk", "simple non-manifold mesh", TM);
+    MeshIO.Write_ASCII_VTK("test_non_manifold_mesh_ASCII.vtk", "simple non-manifold mesh", TM, VX);
+    MeshIO.Write_Binary_VTK("test_non_manifold_mesh_BIN.vtk", "simple non-manifold mesh", TM, VX);
 
     // read the mesh data ASCII (read into temporary structures)
-    MeshInterface* TM_Read_ASCII = MeshIO.Read_ASCII_VTK("test_non_manifold_mesh_ASCII.vtk");
+    Mesh<3>  MultiMesh_Read_ASCII(0,0,0); // completely empty mesh
+    MeshIO.Read_ASCII_VTK("test_non_manifold_mesh_ASCII.vtk", MultiMesh_Read_ASCII);
 
     // check that cells are the same!
-    SmallIndType TD = TM_Read_ASCII->Top_Dim();
-    CellIndType  NC = TM_Read_ASCII->Num_Cells();
+    SmallIndType TD = MultiMesh_Read_ASCII.TriMesh[0].Top_Dim();
+    CellIndType  NC = MultiMesh_Read_ASCII.TriMesh[0].Num_Cells();
     for (CellIndType ci = 0; ci < NC; ++ci)
     {
         //cout << "Check Cell #" << ci << endl;
         const CellType& CL = TM.Get_Cell(ci);
-        const CellType& CL_ASCII = TM_Read_ASCII->Get_Cell(ci);
+        const CellType& CL_ASCII = MultiMesh_Read_ASCII.TriMesh[0].Get_Cell(ci);
         if (!(CL.Equal(CL_ASCII)))
         {
             cout << "ASCII Check:" << endl;
@@ -68,12 +74,12 @@ int main()
         }
     }
     // check that vertex coordinates are the same!
-    VtxIndType NP = TM_Read_ASCII->Num_Points();
+    VtxIndType NP = MultiMesh_Read_ASCII.Vtx.Num_Points();
     for (VtxIndType vi = 0; vi < NP; ++vi)
     {
         //cout << "Vtx #" << vi << endl;
-        const CoordType& VC = TM.Get_Point(vi);
-        const CoordType& VC_ASCII = TM_Read_ASCII->Get_Point(vi);
+        const CoordType& VC = VX.Get_Point(vi);
+        const CoordType& VC_ASCII = MultiMesh_Read_ASCII.Vtx.Get_Point(vi);
         if (!(VC.Equal(VC_ASCII)))
         {
             cout << "ASCII Check:" << endl;
@@ -84,20 +90,19 @@ int main()
             break;
         }
     }
-    // clean-up
-    delete(TM_Read_ASCII);
 
     // read the mesh data BINARY (read into temporary structures)
-    MeshInterface* TM_Read_BIN = MeshIO.Read_BINARY_VTK("test_non_manifold_mesh_BIN.vtk");
+    Mesh<3>  MultiMesh_Read_BIN(0,0,0); // completely empty mesh
+    MeshIO.Read_BINARY_VTK("test_non_manifold_mesh_BIN.vtk", MultiMesh_Read_BIN);
 
     // check that cells are the same!
-    TD = TM_Read_BIN->Top_Dim();
-    NC = TM_Read_BIN->Num_Cells();
+    TD = MultiMesh_Read_BIN.TriMesh[0].Top_Dim();
+    NC = MultiMesh_Read_BIN.TriMesh[0].Num_Cells();
     for (CellIndType ci = 0; ci < NC; ++ci)
     {
         //cout << "Check Cell #" << ci << endl;
         const CellType& CL = TM.Get_Cell(ci);
-        const CellType& CL_BIN = TM_Read_BIN->Get_Cell(ci);
+        const CellType& CL_BIN = MultiMesh_Read_BIN.TriMesh[0].Get_Cell(ci);
         if (!(CL.Equal(CL_BIN)))
         {
             cout << "BINARY Check:" << endl;
@@ -109,12 +114,12 @@ int main()
         }
     }
     // check that vertex coordinates are the same!
-    NP = TM_Read_BIN->Num_Points();
+    NP = MultiMesh_Read_BIN.Vtx.Num_Points();
     for (VtxIndType vi = 0; vi < NP; ++vi)
     {
         //cout << "Vtx #" << vi << endl;
-        const CoordType& VC = TM.Get_Point(vi);
-        const CoordType& VC_BIN = TM_Read_BIN->Get_Point(vi);
+        const CoordType& VC = VX.Get_Point(vi);
+        const CoordType& VC_BIN = MultiMesh_Read_BIN.Vtx.Get_Point(vi);
         if (!(VC.Equal(VC_BIN)))
         {
             cout << "BINARY Check:" << endl;
@@ -125,8 +130,6 @@ int main()
             break;
         }
     }
-    // clean-up
-    delete(TM_Read_BIN);
 
     if (OUTPUT_CODE==0)
         cout << "Unit test is successful!" << endl;

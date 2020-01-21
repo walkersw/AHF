@@ -1,0 +1,100 @@
+/*
+============================================================================================
+   Class for half-edge data structure to store non-manifold surface meshes.
+
+   Note: triangles are indexed starting at 1!  Everything is indexed starting at 1!
+
+   Copyright (c) 10-16-2015,  Shawn W. Walker
+============================================================================================
+*/
+
+/***************************************************************************************/
+/* this struct holds the half-edge data */
+typedef struct {
+    TriIndType    ti; // triangle index
+    SmallIndType  ei; // local edge index of ti
+} HALF_EDGE;
+
+/* C++ class definition */
+#define  TriC  TriConnectivity
+class TriC
+{
+public:
+    TriC();
+    ~TriC();
+    // allocate room for specified number of triangles
+    void Reserve(const TriIndType&);
+    // get number of triangles stored
+    TriIndType Num() const
+    {
+        TriIndType Three_Times_Num = Elem.size();
+        return (TriIndType) (Three_Times_Num / 3);
+    };
+
+    // append one triangle to the end of the array
+    void Append(const VtxIndType&, const VtxIndType&, const VtxIndType&);
+    // read one triangle
+    void Read(const TriIndType& ti, VtxIndType a[3]) const;
+
+    // element connectivity
+    // length should always be a multiple of three,
+    // because three vertices per element
+    std::vector<VtxIndType>  Elem;
+
+private:
+    double  Reserve_Buffer; // amount of extra memory to allocate when
+                            // re-allocating Elem (number between 0 and 1).
+
+};
+
+/***************************************************************************************/
+/* constructor */
+TriC::TriC()
+{
+    Reserve_Buffer = 0.2; // allocate an extra 20% when re-allocating
+    Elem.clear(); // ensure memory is clear to start
+}
+
+/***************************************************************************************/
+/* DE-structor */
+TriC::~TriC()
+{
+    // clear the data
+    Elem.clear();
+}
+
+/***************************************************************************************/
+/* Allocate memory to hold triangulation of given size (plus a little). */
+void TriC::Reserve(const TriIndType& Num_Tri)
+{
+    // compute the actual size to allocate
+    TriIndType Actual_SIZE = (TriIndType) (3 * (1.0 + Reserve_Buffer) * Num_Tri);
+    Elem.reserve(Actual_SIZE);
+}
+
+/***************************************************************************************/
+/* Append a triangle to the end of the list. */
+void TriC::Append(const VtxIndType& v1, const VtxIndType& v2, const VtxIndType& v3)
+{
+    // append this triangle to the end
+    Elem.push_back(v1);
+    Elem.push_back(v2);
+    Elem.push_back(v3);
+}
+
+/***************************************************************************************/
+/* Read a specific triangle connectivity (given the triangle index) */
+void TriC::Read(const TriIndType& ti, VtxIndType array[3]) const
+{
+    // ti must be between 1 and Num
+	assert((ti>=1) && (ti<=this->Num()));
+
+    const TriIndType Ind1 = 3 * (ti - 1);
+    array[0] = Elem[Ind1];
+    array[1] = Elem[Ind1+1];
+    array[2] = Elem[Ind1+2];
+}
+
+#undef TriC
+
+/***/
