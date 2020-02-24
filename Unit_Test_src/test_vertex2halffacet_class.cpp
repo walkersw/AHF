@@ -17,7 +17,7 @@ using namespace std;
 int main()
 {
     // init output code
-    int OUTPUT_CODE = 0; // 0 indicates success, 1 is failure
+    int OUTPUT_CODE = 0; // 0 indicates success, > 0 is failure
 
     // minor test
     Vtx2HalfFacet_Mapping  V2HF;

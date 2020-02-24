@@ -2,6 +2,8 @@
 ============================================================================================
    Interface (abstract) class for AHF Mesh class (of any dimensions).
 
+NOTE: this is NOT used anymore!!!
+
 Why did I do it like this?  Just have Mesh inherit from BaseMesh, and it will have an additional member variable "Points".
 
 You did it so Mesh_Open could be used by BaseMesh and BasePtCoord.

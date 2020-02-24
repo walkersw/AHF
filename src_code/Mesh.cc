@@ -2,89 +2,14 @@
 ============================================================================================
    Class for array based half-facet (AHF) data structure.  This stores and processes
    multiple topological meshes (possibly non-manifold) of dimensions 1, 2, or 3.  All
-   of the meshes reference a a common set of vertices.  Ergo, a *single* set of point
+   of the meshes reference a common set of vertices.  Ergo, a *single* set of point
    coordinates is also stored.  All meshes are simplex meshes.
 
    Note: Everything is indexed starting at 0!
 
    Also note: using a vector of structs is 2 x faster than using a vector of integers.
 
-   Example:  2-D triangulations; in this case, a half-facet == half-edge.
-
-   Scheme for ordering *local* topological entities:
-
-        V2 +
-           |\
-           |  \
-           |    \
-           |      \
-           |        \  E0
-        E1 |          \
-           |            \
-           |              \
-           |                \
-           |                  \
-        V0 +-------------------+ V1
-                    E2
-
-    EXAMPLE:  Mesh of two triangles.
-
-        V3 +-------------------+ V2
-           |\                  |
-           |  \                |
-           |    \        T1    |
-           |      \            |
-           |        \          |
-           |          \        |
-           |            \      |
-           |     T0       \    |
-           |                \  |
-           |                  \|
-        V0 +-------------------+ V1
-
-   Triangle Connectivity and Sibling Half-Facet (Half-Edge) Data Struct:
-
-   triangle |   vertices   |     sibling half-edges
-    indices |  V0, V1, V2  |     E0,     E1,      E2
-   ---------+--------------+-------------------------
-       0    |   0,  1,  3  |  <1,1>, <NULL>,  <NULL>
-       1    |   1,  2,  3  | <NULL>,  <0,0>,  <NULL>
-
-   where <Ti,Ei> is a half-edge, where Ti is the *neighbor* triangle index, and
-   Ei is the local edge index of Ti that correponds to the half-edge. <NULL> means
-   there is no neighbor triangle.
-
-   Vertex-to-Half-Edge Data Struct:
-
-     vertex |  adjacent
-    indices | half-edge
-   ---------+------------
-       0    |   <0,2>
-       1    |   <1,2>
-       2    |   <1,0>
-       3    |   <0,1>
-
-   Diagram depicting half-edges:
-
-                   <1,0>
-        V3 +-------------------+ V2
-           |\                  |
-           |  \          T1    |
-           |    \              |
-           |      \  <1,1>     |
-     <0,1> |        \          | <1,2>
-           |    <0,0> \        |
-           |            \      |
-           |              \    |
-           |     T0         \  |
-           |                  \|
-        V0 +-------------------+ V1
-                   <0,2>
-
-   Note: in this example, only need one adjacent half-edge because there are no
-         non-manifold vertices.  But we do allow for non-manifold vertices!
-
-   Copyright (c) 12-17-2016,  Shawn W. Walker
+   Copyright (c) 01-24-2020,  Shawn W. Walker
 ============================================================================================
 */
 
@@ -97,11 +22,8 @@
 #include "BasePtCoord.cc"  // base class for all vertex coordinates
 #endif
 
-
-/***************************************************************************************/
 /* define the mesh types we allow */
 enum class MeshType {None, Int, Tri, Tet};
-
 
 /* C++ class definition */
 #define  MMC  Mesh
@@ -114,7 +36,7 @@ public:
     MMC(SmallIndType N_1, SmallIndType N_2, SmallIndType N_3);
     ~MMC();
     
-    /* define arrays of topologial meshes (add one to avoid C++ errors) */
+    /* define arrays of topologial meshes */
     std::vector< BaseMesh<1> >  IntMesh;
     std::vector< BaseMesh<2> >  TriMesh;
     std::vector< BaseMesh<3> >  TetMesh;
@@ -125,22 +47,22 @@ public:
     inline void Open()
     {
         for (std::vector< BaseMesh<1> >::iterator it=IntMesh.begin(); it!=IntMesh.end(); ++it)
-            *it.Open();
+            (*it).Open();
         for (std::vector< BaseMesh<2> >::iterator it=TriMesh.begin(); it!=TriMesh.end(); ++it)
-            *it.Open();
+            (*it).Open();
         for (std::vector< BaseMesh<3> >::iterator it=TetMesh.begin(); it!=TetMesh.end(); ++it)
-            *it.Open();
+            (*it).Open();
         Vtx.Open();
     };
     // close Mesh; modification is no longer allowed
     inline void Close()
     {
         for (std::vector< BaseMesh<1> >::iterator it=IntMesh.begin(); it!=IntMesh.end(); ++it)
-            *it.Close();
+            (*it).Close();
         for (std::vector< BaseMesh<2> >::iterator it=TriMesh.begin(); it!=TriMesh.end(); ++it)
-            *it.Close();
+            (*it).Close();
         for (std::vector< BaseMesh<3> >::iterator it=TetMesh.begin(); it!=TetMesh.end(); ++it)
-            *it.Close();
+            (*it).Close();
         Vtx.Close();
     };
 
@@ -157,16 +79,16 @@ public:
     };
     
     // get the maximum topological dimension in the mesh
-    const SmallIndType Max_Topological_Dim() const
+    SmallIndType Max_Topological_Dim() const
     {
         if (TetMesh.size() > 0)
-            return 3;
+            return (SmallIndType) 3;
         else if (TriMesh.size() > 0)
-            return 2;
+            return (SmallIndType) 2;
         else if (IntMesh.size() > 0)
-            return 1;
+            return (SmallIndType) 1;
         else
-            return 0;
+            return (SmallIndType) 0;
     };
 
 private:

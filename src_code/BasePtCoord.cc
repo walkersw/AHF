@@ -18,10 +18,6 @@
 #include "BasicStructs.h" // basic structs for the BasePtCoord class
 #endif
 
-// #ifndef _MESHINTERFACE_CC
-// #include "MeshInterface.cc"  // generic (dimension independent) interface class for Mesh
-// #endif
-
 /* C++ class definition */
 #define  BPC  BasePtCoord
 // template the geometric dimension (of the vertex coordinates)
@@ -143,9 +139,13 @@ void BPC<GEO_DIM>::Init_Points(const VtxIndType& Num_Pts)
     Zero_Pt.Set(); // init to (0,0,...,0)
 
     if (Point.capacity() < Num_Pts)
+    {
         Reserve_Points(Num_Pts);
+    }
     else
+    {
         Point.resize(Num_Pts);
+    }
 	
 	typename std::vector<VtxCoord_DIM>::iterator it;
     it = Point.begin();

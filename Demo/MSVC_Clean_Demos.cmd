@@ -1,4 +1,4 @@
-rem script to compile all of the demos.
+rem script to delete the demo executables.
 @echo off
 
 @setlocal EnableDelayedExpansion
@@ -25,9 +25,19 @@ rem echo %demo_dirs[0]%
 rem loop through all demo directories
 @for /l %%n in (0,1,4) do @(
   @echo --------------------------------------------------
-  @echo Compile this directory:  !demo_dirs[%%n]!
+  @echo Run demo in this directory:  !demo_dirs[%%n]!
   cd !demo_dirs[%%n]!
-  call ../MSVC_Compile !demo_files[%%n]!
+  call del !demo_files[%%n]!.exe
+  @if !errorlevel! equ 0 (
+    @echo *Successfully* deleted this demo: !demo_dirs[%%n]!
+  ) else (
+    @echo The error code is:
+	@echo !errorlevel!
+    @echo This demo did not get deleted: !demo_dirs[%%n]!
+	@echo --------------------------------------------------
+	exit /b
+  )
   cd ..
 )
 @echo --------------------------------------------------
+@echo All demo executables erased successfully.

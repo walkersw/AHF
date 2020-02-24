@@ -29,6 +29,7 @@
                  half-facets are edges of the triangle.
    CELL_DIM = 3: cell is a tetrahedron;
                  half-facets are faces of the tetrahedron.
+   One can continue increasing the dimension...
 */
 struct CellType // this is an interface
 {
@@ -47,6 +48,8 @@ struct CellType // this is an interface
     virtual CellType& Set(const SmallIndType&, const VtxIndType&, const HalfFacetType&)=0;
     // set all vertex indices, and init half-facets to NULL
     virtual CellType& Set(const VtxIndType*)=0;
+    // 0-D
+    virtual CellType& Set_0D(const VtxIndType&)=0;
     // 1-D
     virtual CellType& Set(const VtxIndType&, const VtxIndType&)=0;
     // 2-D
@@ -129,6 +132,15 @@ struct CellSimplexType : CellType
         }
         return *this;
     }
+    // 0-D
+    inline CellType& Set_0D(const VtxIndType& v0)
+    {
+        assert(CELL_DIM==0);
+        vtx[0] = v0;
+        halffacet[0].Set();
+
+        return *this;
+    }
     // 1-D
     inline CellType& Set(const VtxIndType& v0, const VtxIndType& v1)
     {
@@ -189,13 +201,16 @@ struct CellSimplexType : CellType
 
 /***************************************************************************************/
 /* REMARK: We need to define a one-to-one mapping between *local* facets and
-   *local* vertices of a cell.
+   *local* vertices of a cell.  Also, see "BaseMesh.cc" for the definition of
+   what a local vertex and local facet are.
+   
+   Note: Vi (vtx) is *never* contained in Fi (facet), because Fi is always opposite Vi.
 
    For an edge (CELL_DIM==1), we define this to be:
       Vtx | Facet (Vertex)
      -----+-------------
-       0  |   0
-       1  |   1
+       0  |   1   (Note: this is actually Vtx #0)
+       1  |   0   (Note: this is actually Vtx #1)
 
    For a triangle (CELL_DIM==2), we define this to be:
       Vtx | Facet (Edge)

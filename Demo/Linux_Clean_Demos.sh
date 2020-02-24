@@ -1,28 +1,29 @@
 #!/bin/bash
 
-# state which demos to compile
+# state which demo executables to erase
 Demo_Dirs=("BaseMesh_0D" "BaseMesh_1D" "BaseMesh_2D" "BaseMesh_3D" "Simple_Mesh_2D")
 
 # run all the demos
-for demo_dir in ${Demo_Dirs[@]}; do
+for dd in {0..4..1}; do
+  demo_dir="${Demo_Dirs[$dd]}"
   echo -----------------------------------------------------------------------
-  echo "Begin compiling demos in this sub-dir:" $demo_dir
+  echo "Delete executable in this sub-dir:" $demo_dir
   echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   cd $demo_dir
-  make
+  make clean
   rc=$?
   cd ..
   if [ $rc -eq 0 ]
   then
-    echo "*Successfully* compiled this demo:" $base_filename
+    echo "*Successfully* deleted this demo."
   else
     echo "The error code is:"
 	echo $rc
-    echo "This demo *failed* to compile:" $base_filename
+    echo "This demo did not get deleted: " $base_filename
 	echo -----------------------------------------------------------------------
 	exit 1
   fi
 done
 echo -----------------------------------------------------------------------
-echo "All demos compiled successfully."
+echo "All demo executables erased successfully."
 exit 0

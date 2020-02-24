@@ -3,11 +3,123 @@
    Base class for array based half-facet (AHF) data structure to store and process meshes.
 
    Note: this base class is used in deriving the 1-D, 2-D, and 3-D mesh classes,
-   as well as arbitrarily higher dimensions.
+   as well as arbitrarily higher dimensions (all simplex meshes).
    Note: no vertex coordinates are stored in this class; this is purely topological.
    Note: everything is indexed from 0!
 
-   Copyright (c) 12-17-2016,  Shawn W. Walker
+   Scheme for ordering *local* topological entities
+   ------------------------------------------------
+
+   RULE: local "facet" Fi is always *opposite* local vertex Vi.
+
+   DIM=1. Interval: facets are vertices (points)
+
+        V0 +-------------------+ V1
+
+   i.e. "facet" F0 = V1 (which is opposite V0), and "facet" F1 = V0 (which is opposite V1)
+
+   DIM=2. Triangle: facets are edges (line segments)
+
+        V2 +
+           |\
+           |  \
+           |    \
+           |      \
+           |        \  E0
+        E1 |          \
+           |            \
+           |              \
+           |                \
+           |                  \
+        V0 +-------------------+ V1
+                    E2
+
+   i.e. "facet" F0 = E0 (which is opposite V0), "facet" F1 = E1 (which is opposite V1), etc...
+
+   DIM=3: Tetrahedron: facets are faces (triangles)
+
+                 V3 +
+                   /|\
+                  / | \
+                 |  |  \
+                |   |   \
+               |    |    \
+               |    |  F1 \               F0 (opposite V0)
+              | F2  |      \
+              |     |       \
+             |   V0 +--------+ V2
+             |     /      __/
+            |    /  F3 __/
+            |  /    __/
+           | /   __/
+          |/  __/
+       V1 +--/
+
+   i.e. facet F0 = [V1, V2, V3] (which is opposite V0),
+        facet F1 = [V0, V3, V2] (which is opposite V1),
+        facet F2 = [V0, V1, V3] (which is opposite V2),
+        facet F3 = [V0, V2, V1] (which is opposite V3).
+
+   Higher DIM: the pattern continues...
+
+   EXAMPLE:  Mesh of two triangles.  In this case, a half-facet == half-edge.
+
+        V3 +-------------------+ V2
+           |\                  |
+           |  \                |
+           |    \        T1    |
+           |      \            |
+           |        \          |
+           |          \        |
+           |            \      |
+           |     T0       \    |
+           |                \  |
+           |                  \|
+        V0 +-------------------+ V1
+
+   Triangle Connectivity and Sibling Half-Facet (Half-Edge) Data Struct:
+
+   triangle |   vertices   |     sibling half-edges
+    indices |  V0, V1, V2  |     E0,     E1,      E2
+   ---------+--------------+-------------------------
+       0    |   0,  1,  3  |  <1,1>, <NULL>,  <NULL>
+       1    |   1,  2,  3  | <NULL>,  <0,0>,  <NULL>
+
+   where <Ti,Ei> is a half-edge, where Ti is the *neighbor* triangle index, and
+   Ei is the local edge index of Ti that correponds to the half-edge. <NULL> means
+   there is no neighbor triangle.
+
+   Vertex-to-Half-Edge Data Struct:
+
+     vertex |  adjacent
+    indices | half-edge
+   ---------+------------
+       0    |   <0,2>
+       1    |   <1,2>
+       2    |   <1,0>
+       3    |   <0,1>
+
+   Diagram depicting half-edges:
+
+                   <1,0>
+        V3 +-------------------+ V2
+           |\                  |
+           |  \          T1    |
+           |    \              |
+           |      \  <1,1>     |
+     <0,1> |        \          | <1,2>
+           |    <0,0> \        |
+           |            \      |
+           |              \    |
+           |     T0         \  |
+           |                  \|
+        V0 +-------------------+ V1
+                   <0,2>
+
+   Note: in this example, only need one adjacent half-edge because there are no
+         non-manifold vertices.  But we do allow for non-manifold vertices!
+
+   Copyright (c) 01-24-2020,  Shawn W. Walker
 ============================================================================================
 */
 
@@ -23,10 +135,6 @@
 #ifndef _BASICSTRUCTS_H
 #include "BasicStructs.h" // basic structs for the BaseMesh class
 #endif
-
-// #ifndef _MESHINTERFACE_CC
-// #include "MeshInterface.cc"  // generic (dimension independent) interface class for Mesh
-// #endif
 
 /* C++ class definition */
 #define  BM  BaseMesh
@@ -71,11 +179,13 @@ public:
     void Append_Cell(const VtxIndType&, const VtxIndType&);
     void Append_Cell(const VtxIndType&, const VtxIndType&, const VtxIndType&);
     void Append_Cell(const VtxIndType&, const VtxIndType&, const VtxIndType&, const VtxIndType&);
+    void Append_Cell_0D(const VtxIndType&);
     // ... and update the intermediate data structure v2hfs (build incrementally)
     void Append_Cell_And_Update(const VtxIndType*);
     void Append_Cell_And_Update(const VtxIndType&, const VtxIndType&);
     void Append_Cell_And_Update(const VtxIndType&, const VtxIndType&, const VtxIndType&);
     void Append_Cell_And_Update(const VtxIndType&, const VtxIndType&, const VtxIndType&, const VtxIndType&);
+    void Append_Cell_0D_And_Update(const VtxIndType&);
     // get number of elements stored
     inline CellIndType Num_Cells() const { return (CellIndType) Cell.size(); };
 
@@ -85,7 +195,8 @@ public:
     inline HalfFacetType* Get_Cell_halffacet(const CellIndType&);
     inline void Get_Cell(const CellIndType&, VtxIndType*, HalfFacetType*);
     // retrieve one cell in its struct form (writeable)
-    inline CellType& Get_Cell(const CellIndType&);
+    //inline CellType& Get_Cell(const CellIndType&);
+    inline CellSimplexType<CELL_DIM>& Get_Cell(const CellIndType&);
 
     // retrieve one cell (read-only)
     inline const VtxIndType* Get_Cell_vtx(const CellIndType&) const;
@@ -93,7 +204,8 @@ public:
     inline const HalfFacetType* Get_Cell_halffacet(const CellIndType&) const;
     inline void Get_Cell(const CellIndType&, const VtxIndType*&, const HalfFacetType*&) const;
     // retrieve one cell in its struct form (read-only)
-    inline const CellType& Get_Cell(const CellIndType&) const;
+    //inline const CellType& Get_Cell(const CellIndType&) const;
+    inline const CellSimplexType<CELL_DIM>& Get_Cell(const CellIndType&) const;
 
     // finalize the data structures for determining mesh connectivity
     //    (i.e. neighbors, vtx2half-facet mapping, etc.) and *close* the mesh.
@@ -130,6 +242,8 @@ public:
 
     // returns a unique set of all edges of the mesh
     void Get_Edges(std::vector<MeshEdgeType>&) const;
+    // print out all the edges of the mesh
+    void Display_Edges() const;
     // test if a pair of vertices is connected by an edge
     bool Is_Connected(const VtxIndType&, const VtxIndType&) const;
     bool Is_Connected(const VtxIndType vv[2]) const;
@@ -159,16 +273,16 @@ public:
     void Get_HalfFacets_Attached_To_HalfFacet(const HalfFacetType&, std::vector<HalfFacetType>&) const;
     // display attached half-facets
     void Display_HalfFacets_Attached_To_HalfFacet(const HalfFacetType&) const;
-    // get a unique set of non-manifold facets
+    // get a unique set of non-manifold half-facets
     void Get_Nonmanifold_HalfFacets(std::vector<HalfFacetType>&) const;
-    // display all non-manifold facets
+    // display all non-manifold half-facets
     void Display_Nonmanifold_HalfFacets() const;
     // get the set of non-manifold vertices
     void Get_Nonmanifold_Vertices(std::vector<VtxIndType>&) const;
     // display all non-manifold vertices
     void Display_Nonmanifold_Vertices() const;
 
-    /* these methods here are for debuggin purposes only.
+    /* these methods here are for debugging purposes only.
        the casual user should never use them! */
     // note: these call internal private versions.
     //       see the private methods (with similar names) for more info.
@@ -231,16 +345,16 @@ protected:
     // given a global vertex, this determines which local vertex it is in the cell
     inline SmallIndType Get_Local_Vertex_Index_In_Cell(const VtxIndType&, const CellSimplex_DIM&) const;
     // map from local vertex in cell to local facets in cell that contain that vertex
-    inline void Get_Local_Facets_Sharing_Local_Vertex(const SmallIndType& vi, SmallIndType facet[CELL_DIM]) const;
+    inline void Get_Local_Facets_Sharing_Local_Vertex(const SmallIndType& vi, SmallIndType*) const;
     // map local facet index to local vertices contained in that facet
-    inline void Get_Local_Vertices_Of_Local_Facet(const SmallIndType&, SmallIndType v[CELL_DIM]) const;
+    inline void Get_Local_Vertices_Of_Local_Facet(const SmallIndType&, SmallIndType*) const;
 
     // get the global vertices in a cell's facet
     inline void Get_Global_Vertices_In_Facet
-          (const VtxIndType vtx[(CELL_DIM+1)], const SmallIndType& fi, VtxIndType fv[CELL_DIM]) const;
+          (const VtxIndType vtx[(CELL_DIM+1)], const SmallIndType& fi, VtxIndType* fv) const;
     // get the vertices in a facet that are adjacent to the given vertex
     inline void Get_Adj_Vertices_In_Facet
-          (const VtxIndType fv[CELL_DIM], const VtxIndType& vi, VtxIndType* adj_vtx) const;
+          (const VtxIndType*, const VtxIndType&, VtxIndType*) const;
     // simple max operation
     VtxIndType Get_Vertex_With_Largest_Index_In_Facet(const VtxIndType vtx[(CELL_DIM+1)], const SmallIndType& fi) const;
     // determine if adjacent vertices are equal
@@ -339,10 +453,19 @@ void BM<CELL_DIM>::Append_Cell(const VtxIndType& v0, const VtxIndType& v1, const
 // 3-D
 template <SmallIndType CELL_DIM>
 void BM<CELL_DIM>::Append_Cell(const VtxIndType& v0, const VtxIndType& v1,
-                                    const VtxIndType& v2, const VtxIndType& v3)
+                               const VtxIndType& v2, const VtxIndType& v3)
 {
     CellSimplex_DIM CL;
     CL.Set(v0,v1,v2,v3);
+    /* append cell to the end */
+    Push_Back_Cell(CL);
+}
+// 0-D
+template <SmallIndType CELL_DIM>
+void BM<CELL_DIM>::Append_Cell_0D(const VtxIndType& v0)
+{
+    CellSimplex_DIM CL;
+    CL.Set_0D(v0);
     /* append cell to the end */
     Push_Back_Cell(CL);
 }
@@ -387,7 +510,7 @@ void BM<CELL_DIM>::Append_Cell_And_Update(const VtxIndType& v0, const VtxIndType
 // 3-D
 template <SmallIndType CELL_DIM>
 void BM<CELL_DIM>::Append_Cell_And_Update(const VtxIndType& v0, const VtxIndType& v1,
-                               const VtxIndType& v2, const VtxIndType& v3)
+                                          const VtxIndType& v2, const VtxIndType& v3)
 {
     // get the next cell index
     const CellIndType ci = Cell.size(); // i.e. the current size
@@ -395,6 +518,18 @@ void BM<CELL_DIM>::Append_Cell_And_Update(const VtxIndType& v0, const VtxIndType
 
     // now "ci" is the *current* cell index
     const VtxIndType vtx[4] = {v0, v1, v2, v3};
+    Append_Half_Facets(ci, vtx);
+}
+// 0-D
+template <SmallIndType CELL_DIM>
+void BM<CELL_DIM>::Append_Cell_0D_And_Update(const VtxIndType& v0)
+{
+    // get the next cell index
+    const CellIndType ci = Cell.size(); // i.e. the current size
+    Append_Cell_0D(v0);
+
+    // now "ci" is the *current* cell index
+    const VtxIndType vtx[1] = {v0};
     Append_Half_Facets(ci, vtx);
 }
 
@@ -449,7 +584,8 @@ inline void BM<CELL_DIM>::Get_Cell(const CellIndType& ci, VtxIndType* vtx_p, Hal
 }
 /* Get pointer to specific mesh cell data (given the cell index). */
 template <SmallIndType CELL_DIM>
-inline CellType& BM<CELL_DIM>::Get_Cell(const CellIndType& ci) // writeable
+//inline CellType& BM<CELL_DIM>::Get_Cell(const CellIndType& ci) // writeable
+inline CellSimplexType<CELL_DIM>& BM<CELL_DIM>::Get_Cell(const CellIndType& ci) // writeable
 {
     if (!Is_Mesh_Open())
     {
@@ -491,7 +627,8 @@ inline void BM<CELL_DIM>::Get_Cell(const CellIndType& ci, const VtxIndType*& vtx
 }
 /* Get pointer to specific mesh cell data (given the cell index). */
 template <SmallIndType CELL_DIM>
-inline const CellType& BM<CELL_DIM>::Get_Cell(const CellIndType& ci) const // read-only
+//inline const CellType& BM<CELL_DIM>::Get_Cell(const CellIndType& ci) const // read-only
+inline const CellSimplexType<CELL_DIM>& BM<CELL_DIM>::Get_Cell(const CellIndType& ci) const // read-only
 {
     // ci must be in [0, Num_Cells), and not invalid
     assert((ci < Num_Cells()) && (ci!=NULL_Cell));
@@ -566,6 +703,31 @@ void BM<CELL_DIM>::Get_Edges(std::vector<MeshEdgeType>& edges) const
     std::vector<MeshEdgeType>::iterator it;
     it = std::unique(edges.begin(), edges.end(), Mesh_Edge_equality);
     edges.resize(std::distance(edges.begin(),it));
+}
+
+/***************************************************************************************/
+/* print out all the edges in the mesh (this uses "Get_Edges"). */
+template <SmallIndType CELL_DIM>
+void BM<CELL_DIM>::Display_Edges() const
+{
+    std::vector<MeshEdgeType> edges;
+    Get_Edges(edges);
+    if (edges.size() > 0)
+    {
+        // print all mesh edges
+        std::cout << "Display all edges of the mesh (a unique list):" << std::endl;
+        std::cout << "Edge:  [ vertex #0, vertex #1 ]" << std::endl;
+        for (std::vector<MeshEdgeType>::const_iterator it = edges.begin(); it!=edges.end(); ++it)
+        {
+            (*it).Print();
+            std::cout << std::endl;
+        }
+    }
+    else
+    {
+        std::cout << "There are NO mesh edges!" << std::endl;
+    }
+    std::cout << std::endl;
 }
 
 /***************************************************************************************/
@@ -815,18 +977,22 @@ void BM<CELL_DIM>::Get_Cells_Attached_To_Vertex_Recurse(const VtxIndType& vi, co
             cell_array.reserve(current_size + cell_attach_chunk);
         cell_array.push_back(ci);
 
-        // get the local facets that share the vertex
-        SmallIndType local_facet[CELL_DIM];
-        Get_Local_Facets_Sharing_Local_Vertex(local_vi, local_facet);
+        if (CELL_DIM > 0)
+        {
+            // get the local facets that share the vertex
+            SmallIndType* local_facet = new SmallIndType[CELL_DIM];
+            Get_Local_Facets_Sharing_Local_Vertex(local_vi, local_facet);
 
-        // loop through the facets
-        for (SmallIndType fi = 0; fi < CELL_DIM; ++fi)
-            if (local_facet[fi]!=NULL_Small)
-            {
-                // determine the neighbor cell on the "other side" of that facet and search it
-                Get_Cells_Attached_To_Vertex_Recurse(vi, CL.halffacet[local_facet[fi]].ci, cell_array);
-            }
-            // else the neighbor does not exist, so do nothing
+            // loop through the facets
+            for (SmallIndType fi = 0; fi < CELL_DIM; ++fi)
+                if (local_facet[fi]!=NULL_Small)
+                {
+                    // determine the neighbor cell on the "other side" of that facet and search it
+                    Get_Cells_Attached_To_Vertex_Recurse(vi, CL.halffacet[local_facet[fi]].ci, cell_array);
+                }
+                // else the neighbor does not exist, so do nothing
+            delete(local_facet);
+        }
     }
 }
 
@@ -922,24 +1088,27 @@ bool BM<CELL_DIM>::Two_Cells_Are_Facet_Connected_Recurse(const VtxIndType& vi, c
         if (local_vi==NULL_Small) return false; // cell does not actually contain the vertex (this should not happen)
 
         // get the local facets that share the vertex
-        SmallIndType local_facet[CELL_DIM];
+        SmallIndType* local_facet = new SmallIndType[CELL_DIM];
         Get_Local_Facets_Sharing_Local_Vertex(local_vi, local_facet);
 
         // keep counting
         Depth_Count++;
 
         // loop through the facets
+        bool CONNECTED = false; // init
         for (SmallIndType fi = 0; fi < CELL_DIM; ++fi)
             if (local_facet[fi]!=NULL_Small)
             {
                 // determine the neighbor cell on the "other side" of that facet and search it
-                const bool CONNECTED = Two_Cells_Are_Facet_Connected_Recurse(
+                CONNECTED = Two_Cells_Are_Facet_Connected_Recurse(
                                            vi, start, CL.halffacet[local_facet[fi]].ci, target, Depth_Count);
-                if (CONNECTED) return true;
+                if (CONNECTED)
+                    break; // it was found!
             }
             // else the neighbor does not exist, so do nothing
 
-        return false; // else it was not found!
+        delete(local_facet);
+        return CONNECTED;
     }
 }
 
@@ -1064,9 +1233,9 @@ void BM<CELL_DIM>::Display_HalfFacets_Attached_To_HalfFacet(const HalfFacetType&
 }
 
 /***************************************************************************************/
-/* get a unique set of non-manifold facets. Note: this requires the sibling
+/* get a unique set of non-manifold half-facets. Note: this requires the sibling
    half-facet data to be completed.  This returns a vector of half-facets, each
-   defining a *distinct* non-manifold facet. */
+   defining a *distinct* non-manifold half-facet. */
 bool non_manifold_sort_function(HalfFacetType A, HalfFacetType B) { return (A.ci < B.ci); };
 bool non_manifold_equal_function(HalfFacetType& A, HalfFacetType& B) { return ( A.Equal(B) ); };
 template <SmallIndType CELL_DIM>
@@ -1143,10 +1312,10 @@ void BM<CELL_DIM>::Display_Nonmanifold_HalfFacets() const
 
     const MedIndType NUM = non_manifold_hf.size();
     if (NUM==0)
-        std::cout << "There are *no* non-manifold facets." << std::endl;
+        std::cout << "There are *no* non-manifold half-facets." << std::endl;
     else // there is at least 1
     {
-        std::cout << "These are all the non-manifold facets in the mesh (output: <cell index, local facet index>):" << std::endl;
+        std::cout << "These are all the non-manifold half-facets in the mesh (output: <cell index, local facet index>):" << std::endl;
         for (MedIndType jj = 0; jj < NUM; ++jj)
             std::cout << "<" << non_manifold_hf[jj].ci << "," << non_manifold_hf[jj].fi << ">" << std::endl;
     }
@@ -1281,17 +1450,23 @@ void BM<CELL_DIM>::Finalize_v2hfs(bool Build_From_Scratch)
 }
 
 /***************************************************************************************/
-/* fill in the sibling half-facet data structure. */
+/* fill in the sibling half-facet data structure.
+   Note: this updates the internal data of "Cell". */
 template <SmallIndType CELL_DIM>
 void BM<CELL_DIM>::Build_Sibling_HalfFacets()
 {
-    if (!Is_Mesh_Open())
+    if ( (!Is_Mesh_Open()) || (CELL_DIM==0) )
         return;
 
     // need some temporary variables
-    VtxIndType* Adj_Vtx       = new VtxIndType[CELL_DIM-1];
-    VtxIndType* Adj_Vtx_First = new VtxIndType[CELL_DIM-1];
-    VtxIndType* Adj_Vtx_Other = new VtxIndType[CELL_DIM-1];
+    SmallIndType arr_size;
+    if (CELL_DIM > 0)
+        arr_size = CELL_DIM-1;
+    else
+        arr_size = 0;
+    VtxIndType* Adj_Vtx       = new VtxIndType[arr_size];
+    VtxIndType* Adj_Vtx_First = new VtxIndType[arr_size];
+    VtxIndType* Adj_Vtx_Other = new VtxIndType[arr_size];
 
     // go thru all the elements
     const CellIndType NC = Num_Cells();
@@ -1484,54 +1659,58 @@ void BM<CELL_DIM>::Build_Vtx2HalfFacets()
             // if this half-facet has no sibling
             if (Cell[ci].halffacet[local_fi].Is_Null())
             {
-                // get the local vertices of the local facet
-                SmallIndType local_vtx[CELL_DIM];
-                Get_Local_Vertices_Of_Local_Facet(local_fi, local_vtx);
-
-                // for each vertex of the current half-facet
-                for (SmallIndType local_vi = 0; local_vi < CELL_DIM; ++local_vi)
+                if (CELL_DIM > 0)
                 {
-                    // get the global vertex
-                    const VtxIndType global_vi = Cell[ci].vtx[ local_vtx[local_vi] ];
+                    // get the local vertices of the local facet
+                    SmallIndType* local_vtx = new SmallIndType[CELL_DIM];
+                    Get_Local_Vertices_Of_Local_Facet(local_fi, local_vtx);
 
-                    // get the half-facets attached to the vertex
-                    std::pair <std::vector<VtxHalfFacetType>::iterator,
-                               std::vector<VtxHalfFacetType>::iterator> RR;
-                    const MedIndType Num_HF = Vtx2HalfFacets.Get_Half_Facets(global_vi, RR);
+                    // for each vertex of the current half-facet
+                    for (SmallIndType local_vi = 0; local_vi < CELL_DIM; ++local_vi)
+                    {
+                        // get the global vertex
+                        const VtxIndType global_vi = Cell[ci].vtx[ local_vtx[local_vi] ];
 
-                    // find the half-facet in the connected component corresponding to ci,
-                    //      and replace it with the half-facet with no sibling.
-                    if (Num_HF==0)
-                    {
-                        // error!
-                        std::cout << "ERROR: the first part of 'Build_Vtx2HalfFacets' missed this vertex: "
-                                  << global_vi << "." << std::endl;
-                        HalfFacetType temp_hf;
-                        Vtx2HalfFacets.Get_Half_Facet(global_vi, temp_hf);
-                        assert(!temp_hf.Is_Null()); // this should stop the program
-                    }
-                    else if (Num_HF==1)
-                    {
-                        // in this case, it is obvious what to replace
-                        (*(RR.first)).ci = ci;
-                        (*(RR.first)).fi = local_fi;
-                    }
-                    else
-                    {
-                        // there is more than one connected component,
-                        //    so we need to find the correct one to replace.
-                        for (std::vector<VtxHalfFacetType>::iterator hf_it = RR.first; hf_it != RR.second; ++hf_it)
+                        // get the half-facets attached to the vertex
+                        std::pair <std::vector<VtxHalfFacetType>::iterator,
+                                   std::vector<VtxHalfFacetType>::iterator> RR;
+                        const MedIndType Num_HF = Vtx2HalfFacets.Get_Half_Facets(global_vi, RR);
+
+                        // find the half-facet in the connected component corresponding to ci,
+                        //      and replace it with the half-facet with no sibling.
+                        if (Num_HF==0)
                         {
-                            const bool CONNECTED = Two_Cells_Are_Facet_Connected(global_vi, ci, (*hf_it).ci);
-                            if (CONNECTED)
+                            // error!
+                            std::cout << "ERROR: the first part of 'Build_Vtx2HalfFacets' missed this vertex: "
+                                      << global_vi << "." << std::endl;
+                            HalfFacetType temp_hf;
+                            Vtx2HalfFacets.Get_Half_Facet(global_vi, temp_hf);
+                            assert(!temp_hf.Is_Null()); // this should stop the program
+                        }
+                        else if (Num_HF==1)
+                        {
+                            // in this case, it is obvious what to replace
+                            (*(RR.first)).ci = ci;
+                            (*(RR.first)).fi = local_fi;
+                        }
+                        else
+                        {
+                            // there is more than one connected component,
+                            //    so we need to find the correct one to replace.
+                            for (std::vector<VtxHalfFacetType>::iterator hf_it = RR.first; hf_it != RR.second; ++hf_it)
                             {
-                                // then replace this one
-                                (*hf_it).ci = ci;
-                                (*hf_it).fi = local_fi;
-                                break; // can stop looking
+                                const bool CONNECTED = Two_Cells_Are_Facet_Connected(global_vi, ci, (*hf_it).ci);
+                                if (CONNECTED)
+                                {
+                                    // then replace this one
+                                    (*hf_it).ci = ci;
+                                    (*hf_it).fi = local_fi;
+                                    break; // can stop looking
+                                }
                             }
                         }
                     }
+                    delete(local_vtx);
                 }
             }
         }
@@ -1572,17 +1751,18 @@ void BM<CELL_DIM>::Vtx2Adjacent(const VtxIndType& v_in, const CellIndType& ci, c
     if ( (fi > CELL_DIM) ) std::cout << "ERROR: local facet index is invalid!" << std::endl;
     assert( (fi <= CELL_DIM) );
 
-    if (CELL_DIM>=2)
+    if (CELL_DIM >= 2)
     {
         // get the vertices in the half-facet "fi"
-        VtxIndType vtx_in_hf[CELL_DIM];
+        VtxIndType* vtx_in_hf = new VtxIndType[CELL_DIM];
         const CellSimplex_DIM CL = Get_Cell_struct(ci);
         Get_Global_Vertices_In_Facet(CL.vtx, fi, vtx_in_hf);
 
         // now return the vertices in the half-facet, EXCEPT v_in (i.e. the adjacent vertices)
         Get_Adj_Vertices_In_Facet(vtx_in_hf, v_in, v_adj);
+        delete(vtx_in_hf);
     }
-    // else do nothing!
+    // else do nothing!  There are no adjacent vertices.
 }
 
 /***************************************************************************************/
@@ -1600,7 +1780,7 @@ inline SmallIndType BM<CELL_DIM>::Get_Local_Vertex_Index_In_Cell(const VtxIndTyp
 /* return the local facet indices that share a given local vertex.
    Note: indexing starts at 0. */
 template <SmallIndType CELL_DIM>
-inline void BM<CELL_DIM>::Get_Local_Facets_Sharing_Local_Vertex(const SmallIndType& vi, SmallIndType facet[CELL_DIM]) const
+inline void BM<CELL_DIM>::Get_Local_Facets_Sharing_Local_Vertex(const SmallIndType& vi, SmallIndType* facet) const
 {
     if ( (vi > CELL_DIM) ) std::cout << "ERROR: vertex index vi is too small or too large!" << std::endl;
     assert( (vi <= CELL_DIM) );
@@ -1619,7 +1799,7 @@ inline void BM<CELL_DIM>::Get_Local_Facets_Sharing_Local_Vertex(const SmallIndTy
 /* Return the local vertices that are attached to a given local facet.
    Note: indexing starts at 0. */
 template <SmallIndType CELL_DIM>
-inline void BM<CELL_DIM>::Get_Local_Vertices_Of_Local_Facet(const SmallIndType& fi, SmallIndType vert[CELL_DIM]) const
+inline void BM<CELL_DIM>::Get_Local_Vertices_Of_Local_Facet(const SmallIndType& fi, SmallIndType* vert) const
 {
     // hahah, we can reuse this!
     Get_Local_Facets_Sharing_Local_Vertex(fi, vert);
@@ -1630,7 +1810,7 @@ inline void BM<CELL_DIM>::Get_Local_Vertices_Of_Local_Facet(const SmallIndType& 
    in that facet. Note: fi indexes from 0. */
 template <SmallIndType CELL_DIM>
 inline void BM<CELL_DIM>::Get_Global_Vertices_In_Facet
-                  (const VtxIndType vtx[(CELL_DIM+1)], const SmallIndType& fi, VtxIndType fv[CELL_DIM]) const
+                  (const VtxIndType vtx[(CELL_DIM+1)], const SmallIndType& fi, VtxIndType* fv) const
 {
     if ( (fi > CELL_DIM) ) std::cout << "ERROR: facet index fi is too small or too large!" << std::endl;
     assert( (fi <= CELL_DIM) );
@@ -1649,7 +1829,7 @@ inline void BM<CELL_DIM>::Get_Global_Vertices_In_Facet
    Note: if vi is not in the facet, then adj_vtx contains NULL_Vtx's (NULL values). */
 template <SmallIndType CELL_DIM>
 inline void BM<CELL_DIM>::Get_Adj_Vertices_In_Facet
-                  (const VtxIndType fv[CELL_DIM], const VtxIndType& vi, VtxIndType* adj_vtx) const
+                  (const VtxIndType* fv, const VtxIndType& vi, VtxIndType* adj_vtx) const
 {
     SmallIndType ii = NULL_Small; // init to invalid value
     for (SmallIndType kk=0; kk < CELL_DIM; ++kk)
@@ -1714,6 +1894,8 @@ inline bool BM<CELL_DIM>::Adj_Vertices_In_Facet_Equal(const VtxIndType* a, const
 // need to do a uniform hierarchical mesh refinement implementation
 
 // need a multi-dim mesh manager, that can store sub-domains (cells), etc... and that can find sub-domain embeddings...
+
+// have a class that manages multi-levels of BaseMesh...
 
 // should have a routine to check the validity of the data structures...
 // or some other sanity checks!!!!

@@ -18,7 +18,7 @@ using namespace std;
 int main()
 {
     // init output code
-    int OUTPUT_CODE = 0; // 0 indicates success, 1 is failure
+    int OUTPUT_CODE = 0; // 0 indicates success, > 0 is failure
 
     // create the object: manifold 2-D surface mesh example
     SurfaceMesh(MultiMesh);

@@ -44,6 +44,8 @@
    where <Ti,Ei> is a half-edge attached to Vi, where Ti (the cell index) and
    Ei (the local edge index) define the particular half-edge.
 
+   Also, see "BaseMesh.cc" for more explanation.
+
    Copyright (c) 12-15-2016,  Shawn W. Walker
 ============================================================================================
 */
@@ -156,12 +158,12 @@ struct VtxHalfFacetType
     {
         if (Is_Null())
         {
-            std::cout << "Vtx# " << "NULL" << ": ";
+            std::cout << "Vtx #" << "NULL" << ": ";
             std::cout << "<" << "-" << "," << "-" << ">";
         }
         else
         {
-            std::cout << "Vtx# " << vtx << ": ";
+            std::cout << "Vtx #" << vtx << ": ";
             std::cout << "<" << ci << ", " << fi << ">";
         }
     };
