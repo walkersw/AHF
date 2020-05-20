@@ -5,11 +5,13 @@
    of the meshes reference a common set of vertices.  Ergo, a *single* set of point
    coordinates is also stored.  All meshes are simplex meshes.
 
+   SWW: what about 0-dim meshes?
+
    Note: Everything is indexed starting at 0!
 
    Also note: using a vector of structs is 2 x faster than using a vector of integers.
 
-   Copyright (c) 01-24-2020,  Shawn W. Walker
+   Copyright (c) 05-18-2020,  Shawn W. Walker
 ============================================================================================
 */
 
@@ -22,8 +24,8 @@
 #include "BasePtCoord.cc"  // base class for all vertex coordinates
 #endif
 
-/* define the mesh types we allow */
-enum class MeshType {None, Int, Tri, Tet};
+/* define the mesh types we allow: None, 0-D, 1-D, 2-D, 3-D */
+enum class MeshType {None, Pt, Int, Tri, Tet};
 
 /* C++ class definition */
 #define  MMC  Mesh
@@ -33,10 +35,11 @@ class MMC
 {
 public:
     MMC();
-    MMC(SmallIndType N_1, SmallIndType N_2, SmallIndType N_3);
+    MMC(SmallIndType N_0, SmallIndType N_1, SmallIndType N_2, SmallIndType N_3);
     ~MMC();
     
     /* define arrays of topologial meshes */
+    std::vector< BaseMesh<0> >   PtMesh;
     std::vector< BaseMesh<1> >  IntMesh;
     std::vector< BaseMesh<2> >  TriMesh;
     std::vector< BaseMesh<3> >  TetMesh;
@@ -46,6 +49,8 @@ public:
     // open Mesh for modification
     inline void Open()
     {
+        for (std::vector< BaseMesh<0> >::iterator it=PtMesh.begin();  it!=PtMesh.end();  ++it)
+            (*it).Open();
         for (std::vector< BaseMesh<1> >::iterator it=IntMesh.begin(); it!=IntMesh.end(); ++it)
             (*it).Open();
         for (std::vector< BaseMesh<2> >::iterator it=TriMesh.begin(); it!=TriMesh.end(); ++it)
@@ -57,6 +62,8 @@ public:
     // close Mesh; modification is no longer allowed
     inline void Close()
     {
+        for (std::vector< BaseMesh<0> >::iterator it=PtMesh.begin();  it!=PtMesh.end(); ++it)
+            (*it).Close();
         for (std::vector< BaseMesh<1> >::iterator it=IntMesh.begin(); it!=IntMesh.end(); ++it)
             (*it).Close();
         for (std::vector< BaseMesh<2> >::iterator it=TriMesh.begin(); it!=TriMesh.end(); ++it)
@@ -69,6 +76,7 @@ public:
     // clear all data
     void Clear()
     {
+        PtMesh.clear();
         IntMesh.clear();
         TriMesh.clear();
         TetMesh.clear();
@@ -102,13 +110,13 @@ private:
 template <SmallIndType GEO_DIM>
 MMC<GEO_DIM>::MMC()
 {
-    MMC(0,0,0);
+    MMC(0,0,0,0);
 }
 
 /***************************************************************************************/
 /* constructor */
 template <SmallIndType GEO_DIM>
-MMC<GEO_DIM>::MMC(SmallIndType Num_1D, SmallIndType Num_2D, SmallIndType Num_3D)
+MMC<GEO_DIM>::MMC(SmallIndType Num_0D, SmallIndType Num_1D, SmallIndType Num_2D, SmallIndType Num_3D)
 {
     // start fresh
     Clear();
@@ -120,12 +128,16 @@ MMC<GEO_DIM>::MMC(SmallIndType Num_1D, SmallIndType Num_2D, SmallIndType Num_3D)
         default_mesh_type = MeshType::Tri;
     else if (Num_1D > 0)
         default_mesh_type = MeshType::Int;
+    else if (Num_0D > 0)
+        default_mesh_type = MeshType::Pt;
     else
         default_mesh_type = MeshType::None; // NULL value
     
     default_mesh_index = 0; // assume the 0th one
     
     // init the topological mesh arrays
+    BaseMesh<0> Empty_PtMesh;
+    PtMesh.assign(Num_0D,Empty_PtMesh);
     BaseMesh<1> Empty_IntMesh;
     IntMesh.assign(Num_1D,Empty_IntMesh);
     BaseMesh<2> Empty_TriMesh;

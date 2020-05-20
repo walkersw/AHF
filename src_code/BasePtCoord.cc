@@ -1,10 +1,11 @@
 /*
 ============================================================================================
    Class for storing a vector of point coordinates.  Meant to work with BaseMesh.
+   (This is just a glorofied C++ STL:vector class.)
 
    Note: Everything is indexed starting at 0!
 
-   Copyright (c) 12-17-2016,  Shawn W. Walker
+   Copyright (c) 05-18-2020,  Shawn W. Walker
 ============================================================================================
 */
 
@@ -57,6 +58,11 @@ public:
     void Reserve_Points(const VtxIndType&);
     // initialize point coordinates to the *origin* for a specific number of vertices
     void Init_Points(const VtxIndType&);
+    
+    // set all of the point coordinates at once
+    void Set_Coord_Data(const PointType*, const VtxIndType&);
+    // set a subset of point coordinates
+    void Set_Coord_Data(const PointType*, const VtxIndType&, const VtxIndType&);
     // set point coordinates of specific vertex
     void Set_Coord(const VtxIndType&, const PointType*);
     void Set_Coord(const VtxIndType&, const PointType&);
@@ -65,11 +71,11 @@ public:
 
     // retrieve one point (writeable)
     inline PointType* Get_Point_coord(const VtxIndType&);
-    inline CoordType& Get_Point(const VtxIndType&);
+    inline VtxCoordType<GEO_DIM>& Get_Point(const VtxIndType&);
 
     // retrieve one point (read-only)
     inline const PointType* Get_Point_coord(const VtxIndType&) const;
-    inline const CoordType& Get_Point(const VtxIndType&) const;
+    inline const VtxCoordType<GEO_DIM>& Get_Point(const VtxIndType&) const;
 
     // print out vertex coordinates
     void Display_Vtx_Coord(const VtxIndType& vi=NULL_Vtx) const;
@@ -153,6 +159,50 @@ void BPC<GEO_DIM>::Init_Points(const VtxIndType& Num_Pts)
 }
 
 /***************************************************************************************/
+/* Set all the coordinates at once.
+   Note: input is the global coordinates of all the vertices. */
+template <SmallIndType GEO_DIM>
+void BPC<GEO_DIM>::Set_Coord_Data(const PointType* Coord_Data, const VtxIndType& Num_Coord_Data)
+{
+    Init_Points(Num_Coord_Data);
+    
+    // now fill it in
+    for (VtxIndType ii = 0; ii < Num_Coord_Data; ++ii)
+    {
+        Point[ii].Set(Coord_Data + GEO_DIM*ii);
+    }
+}
+
+/***************************************************************************************/
+/* Set a subset of the coordinates.
+   Note: input is the global coordinates of subset of vertices. */
+template <SmallIndType GEO_DIM>
+void BPC<GEO_DIM>::Set_Coord_Data(const PointType* Coord_Data,
+                                  const VtxIndType& Begin_Index, const VtxIndType& Num_Pts)
+{
+    if (!Is_Point_Open())
+        return;
+
+    const VtxIndType Actual_Num_Pts = Begin_Index + Num_Pts;
+    if (Point.capacity() < Actual_Num_Pts)
+    {
+        Reserve_Points(Actual_Num_Pts);
+    }
+    if (Point.size() < Actual_Num_Pts)
+    {
+        VtxCoord_DIM Zero_Pt;
+        Zero_Pt.Set(); // init to (0,0,...,0)
+        Point.resize(Actual_Num_Pts,Zero_Pt);
+    }
+    
+    // now fill it in
+    for (VtxIndType ii = Begin_Index; ii < Actual_Num_Pts; ++ii)
+    {
+        Point[ii].Set(Coord_Data + GEO_DIM*ii);
+    }
+}
+
+/***************************************************************************************/
 /* Set the coordinates of a specific vertex. */
 template <SmallIndType GEO_DIM>
 void BPC<GEO_DIM>::Set_Coord(const VtxIndType& vi, const PointType* vtx_coord)
@@ -217,7 +267,7 @@ inline PointType* BPC<GEO_DIM>::Get_Point_coord(const VtxIndType& vi) // writeab
 }
 /* Get pointer to specific point data (given the point vertex index). */
 template <SmallIndType GEO_DIM>
-inline CoordType& BPC<GEO_DIM>::Get_Point(const VtxIndType& vi) // writeable
+inline VtxCoordType<GEO_DIM>& BPC<GEO_DIM>::Get_Point(const VtxIndType& vi) // writeable
 {
     if (!Is_Point_Open())
     {
@@ -242,7 +292,7 @@ inline const PointType* BPC<GEO_DIM>::Get_Point_coord(const VtxIndType& vi) cons
 }
 /* Get pointer to specific point data (given the point vertex index). */
 template <SmallIndType GEO_DIM>
-inline const CoordType& BPC<GEO_DIM>::Get_Point(const VtxIndType& vi) const // read-only
+inline const VtxCoordType<GEO_DIM>& BPC<GEO_DIM>::Get_Point(const VtxIndType& vi) const // read-only
 {
     // vi must be in [0, Num_Points), and not invalid
     assert((vi < Num_Points()) && (vi!=NULL_Vtx));

@@ -62,19 +62,24 @@ int main()
     BasePtCoord<2>& VX = MultiMesh.Vtx;
 
     // define the cell connectivity (4 cells)
-    TM_w.Reserve_Cells(4);
-    TM_w.Append_Cell(0,1,4);
-    TM_w.Append_Cell(1,2,4);
-    TM_w.Append_Cell(2,3,4);
-    TM_w.Append_Cell(3,0,4);
+    const VtxIndType  Cell_Conn[] = {0,1,4,  1,2,4,  2,3,4,  3,0,4};
+    TM_w.Set_Cell_Data(Cell_Conn, 4);
+    //TM_w.Reserve_Cells(4);
+    //TM_w.Append_Cell(0,1,4);
+    //TM_w.Append_Cell(1,2,4);
+    //TM_w.Append_Cell(2,3,4);
+    //TM_w.Append_Cell(3,0,4);
 
     // now add the vertex point coordinates (5 vertices)
-    VX.Init_Points(5);
-    VX.Set_Coord(0, 0.0,0.0);
-    VX.Set_Coord(1, 1.0,0.0);
-    VX.Set_Coord(2, 1.0,1.0);
-    VX.Set_Coord(3, 0.0,1.0);
-    VX.Set_Coord(4, 0.5,0.5);
+    const PointType  Vtx_Coord[] = {0.0,0.0,  1.0,0.0,  1.0,1.0,  0.0,1.0,  0.5,0.5};
+    //VX.Set_Coord_Data(Vtx_Coord, 5);
+    VX.Set_Coord_Data(Vtx_Coord, 0, 5); // starting vertex index is 0
+    //VX.Init_Points(5);
+    //VX.Set_Coord(0, 0.0,0.0);
+    //VX.Set_Coord(1, 1.0,0.0);
+    //VX.Set_Coord(2, 1.0,1.0);
+    //VX.Set_Coord(3, 0.0,1.0);
+    //VX.Set_Coord(4, 0.5,0.5);
 
     // display coordinates
     VX.Display_Vtx_Coord();

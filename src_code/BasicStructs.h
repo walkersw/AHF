@@ -7,7 +7,7 @@
          std::vectors of cells and point coordinates.
    Note: everything is indexed from 0!
 
-   Copyright (c) 12-15-2016,  Shawn W. Walker
+   Copyright (c) 05-18-2020,  Shawn W. Walker
 ============================================================================================
 */
 
@@ -43,6 +43,9 @@ struct CellType // this is an interface
     //virtual inline bool Equal(const CellType*) const = 0;
     virtual bool Equal(const CellType&) const = 0;
     virtual bool Equal(const VtxIndType*, const HalfFacetType*) const = 0;
+
+    // clear the cell
+    virtual CellType& Clear()=0;
 
     // set *one* vertex/facet index
     virtual CellType& Set(const SmallIndType&, const VtxIndType&, const HalfFacetType&)=0;
@@ -105,6 +108,16 @@ struct CellSimplexType : CellType
             if (!IN_halffacet[ii].Equal(halffacet[ii])) return false;
         }
         return true;
+    }
+    // clear the cell, i.e. set everything to NULL values
+    inline CellType& Clear()
+    {
+        for (SmallIndType ii = 0; ii < (CELL_DIM+1); ++ii)
+        {
+            vtx[ii] = NULL_Vtx;
+            halffacet[ii].Set();
+        }
+        return *this;
     }
     // set *one* vertex/facet index
     inline CellType& Set(const SmallIndType& index, const VtxIndType& v, const HalfFacetType& hf)
@@ -306,6 +319,7 @@ struct CoordType // this is an interface
 
     // check equality
     virtual bool Equal(const CoordType&) const = 0;
+    
     // set point coordinates
     virtual CoordType& Set(const PointType*)=0;
     // 1-D
@@ -345,6 +359,7 @@ struct VtxCoordType : CoordType
 
         return true;
     }
+    
     // set point coordinates
     inline CoordType& Set(const PointType* p)
     {

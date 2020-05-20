@@ -22,7 +22,7 @@ int main()
 
     // create the object: manifold 2-D surface mesh example
     SurfaceMesh(MultiMesh);
-    // Mesh<3>  MultiMesh(0,1,0); // alternative
+    // Mesh<3>  MultiMesh(0,0,1,0); // alternative
 
     // access the parts we need
     BaseMesh<2>& TM = MultiMesh.TriMesh[0];

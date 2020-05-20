@@ -46,7 +46,7 @@
 
    Also, see "BaseMesh.cc" for more explanation.
 
-   Copyright (c) 12-15-2016,  Shawn W. Walker
+   Copyright (c) 05-18-2020,  Shawn W. Walker
 ============================================================================================
 */
 

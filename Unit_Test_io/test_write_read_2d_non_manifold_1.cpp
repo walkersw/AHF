@@ -22,7 +22,7 @@ int main()
 
     // create the object: manifold 2-D surface mesh example
     SurfaceMesh(MultiMesh);
-    // Mesh<3>  MultiMesh(0,1,0); // alternative
+    // Mesh<3>  MultiMesh(0,0,1,0); // alternative
 
     // access the parts we need
     BaseMesh<2>& TM = MultiMesh.TriMesh[0];
@@ -52,7 +52,7 @@ int main()
     MeshIO.Write_Binary_VTK("test_non_manifold_mesh_BIN.vtk", "simple non-manifold mesh", TM, VX);
 
     // read the mesh data ASCII (read into temporary structures)
-    Mesh<3>  MultiMesh_Read_ASCII(0,0,0); // completely empty mesh
+    Mesh<3>  MultiMesh_Read_ASCII(0,0,0,0); // completely empty mesh
     MeshIO.Read_ASCII_VTK("test_non_manifold_mesh_ASCII.vtk", MultiMesh_Read_ASCII);
 
     // check that cells are the same!
@@ -92,7 +92,7 @@ int main()
     }
 
     // read the mesh data BINARY (read into temporary structures)
-    Mesh<3>  MultiMesh_Read_BIN(0,0,0); // completely empty mesh
+    Mesh<3>  MultiMesh_Read_BIN(0,0,0,0); // completely empty mesh
     MeshIO.Read_BINARY_VTK("test_non_manifold_mesh_BIN.vtk", MultiMesh_Read_BIN);
 
     // check that cells are the same!

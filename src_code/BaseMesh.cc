@@ -119,7 +119,7 @@
    Note: in this example, only need one adjacent half-edge because there are no
          non-manifold vertices.  But we do allow for non-manifold vertices!
 
-   Copyright (c) 01-24-2020,  Shawn W. Walker
+   Copyright (c) 05-18-2020,  Shawn W. Walker
 ============================================================================================
 */
 
@@ -174,6 +174,10 @@ public:
     inline SmallIndType Top_Dim() const { return CELL_DIM; };
     // allocate room for specified number of elements
     void Reserve_Cells(const CellIndType&);
+    // set the cell data with a given array
+    void Set_Cell_Data(const VtxIndType*, const CellIndType&);
+    // append a bunch of cells (in a given array) to the end of the array
+    void Append_Cell_Data(const VtxIndType*, const CellIndType&);
     // append one cell to the end of the array
     void Append_Cell(const VtxIndType*);
     void Append_Cell(const VtxIndType&, const VtxIndType&);
@@ -407,6 +411,26 @@ void BM<CELL_DIM>::Reserve_Cells(const CellIndType& Num_C)
 }
 
 /***************************************************************************************/
+/* Set the cell data all at once.
+   Note: input is the global vertex indices of the corners of all the cell simplices. */
+template <SmallIndType CELL_DIM>
+void BM<CELL_DIM>::Set_Cell_Data(const VtxIndType* Cell_Data, const CellIndType& Num_Cell_Data)
+{
+    // allocate
+    Reserve_Cells(Num_Cell_Data);
+    // init to NULL
+    CellSimplex_DIM CL;
+    CL.Clear();
+    Cell.assign(Num_Cell_Data,CL);
+    
+    // now fill it in
+    for (CellIndType ii = 0; ii < Num_Cell_Data; ++ii)
+    {
+        Cell[ii].Set(Cell_Data + (CELL_DIM+1)*ii);
+    }
+}
+
+/***************************************************************************************/
 /* Internal helper routine for pushing a cell to the end of the list. */
 template <SmallIndType CELL_DIM>
 void BM<CELL_DIM>::Push_Back_Cell(const CellSimplex_DIM& CL)
@@ -423,7 +447,22 @@ void BM<CELL_DIM>::Push_Back_Cell(const CellSimplex_DIM& CL)
 
 /***************************************************************************************/
 /* Append a cell element to the end of the list.
-   Note: input is the global vertex indices of the corners of the cell simplex. */
+   Note: input is the global vertex indices of the corners of all the cell simplices. */
+// append a bunch of cells at once
+template <SmallIndType CELL_DIM>
+void BM<CELL_DIM>::Append_Cell_Data(const VtxIndType* Cell_Data, const CellIndType& Num_Cell_Data)
+{
+    const CellIndType New_Total_Cells = Num_Cells() + Num_Cell_Data;
+    Reserve_Cells(New_Total_Cells);
+    
+    // now append them
+    for (CellIndType ii = 0; ii < Num_Cell_Data; ++ii)
+    {
+        CellSimplex_DIM  CL;
+        CL.Set(Cell_Data + (CELL_DIM+1)*ii);
+        Push_Back_Cell(CL);
+    }
+}
 template <SmallIndType CELL_DIM>
 void BM<CELL_DIM>::Append_Cell(const VtxIndType* vtx)
 {
@@ -1899,6 +1938,19 @@ inline bool BM<CELL_DIM>::Adj_Vertices_In_Facet_Equal(const VtxIndType* a, const
 
 // should have a routine to check the validity of the data structures...
 // or some other sanity checks!!!!
+
+
+// Here are the steps:
+// 1. Finish developing the AHF mesh class.  *Everything*
+// depends on that.  Also, if you give up on the FELICITY-
+// Python conversion, at least you still have a product.
+// Note: this includes adaptive mesh refinement, and having
+// sub-domains.
+// 2. Interface the mesh class to Python.  Again, this is a
+// nice product to have by itself.
+// 3. Then develop the DSL to only define domains, sub-domains,
+// and some trivial function spaces, e.g. the Constant space
+
 
 #undef BM
 

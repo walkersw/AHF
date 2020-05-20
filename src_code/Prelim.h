@@ -2,7 +2,7 @@
 ============================================================================================
    Preliminary includes and definitions.
 
-   Copyright (c) 12-15-2016,  Shawn W. Walker
+   Copyright (c) 05-18-2020,  Shawn W. Walker
 ============================================================================================
 */
 
@@ -20,8 +20,8 @@
 /* define types for indices */
 typedef unsigned int SmallIndType; // type for "small" indices (i.e. 0 through ~255)
 typedef unsigned int MedIndType;   // type for "medium" indices (i.e. 0 through ~100,000)
-typedef unsigned int VtxIndType;   // vertex indices
-typedef unsigned int CellIndType;  // cell indices, e.g. triangles, tetrahedrons
+typedef unsigned int VtxIndType;   // vertex indices ("large")
+typedef unsigned int CellIndType;  // cell indices ("large"), e.g. triangles, tetrahedrons
 
 /* define NULL constants */
 static const unsigned int NULL_Small = std::numeric_limits<unsigned int>::max(); // define the NULL index

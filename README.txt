@@ -1,7 +1,7 @@
 
   Implementation of Array Based Half-Facet (AHF) Mesh Data Structure
-	         (for 1-D, 2-D, 3-D, simplex meshes only)
-                 (C) 12/20/2016, Shawn W. Walker
+	                (for simplex meshes only)
+                 (C) 03/01/2020, Shawn W. Walker
 
 This code is open source under the BSD license.
 
@@ -62,7 +62,7 @@ This code was developed with MS Visual C++ 2015 and g++, using Notepad++.
 
 Tested on these systems:
 
--- Windows 8, 64-bit
+-- Windows 10, 64-bit
 
 -- LINUX KDE/Ubuntu, 64-bit
 

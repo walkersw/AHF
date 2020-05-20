@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # state which demos to compile
-Demo_Dirs=("BaseMesh_0D" "BaseMesh_1D" "BaseMesh_2D" "BaseMesh_3D" "Simple_Mesh_2D")
+Demo_Dirs=("BaseMesh_0D" "BaseMesh_1D" "BaseMesh_2D" "BaseMesh_3D" "BasePtCoord_2D" "Simple_Mesh_2D")
 
 # run all the demos
 for demo_dir in ${Demo_Dirs[@]}; do
