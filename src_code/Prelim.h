@@ -34,4 +34,8 @@ static const unsigned int NULL_Cell  = std::numeric_limits<unsigned int>::max();
 typedef double PointType;
 typedef float  PointTypeFl;
 
+/* define data type for real numbers */
+typedef double RealType;
+typedef float  RealTypeFl;
+
 /***/

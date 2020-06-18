@@ -6,11 +6,11 @@
    0 non-manifold edges and 0 non-manifold vertices.  It also does some basic processing.
    See 'Manifold_Triangle_Mesh_1.jpg' for a picture of the mesh embedded in 2-D.
 
-   Copyright (c) 12-17-2016,  Shawn W. Walker
+   Copyright (c) 05-21-2020,  Shawn W. Walker
 ============================================================================================
 */
 
-#include "../src_code/TypedefMeshes.h"
+#include <TypedefMeshes.h>
 
 using namespace std;
 
@@ -21,13 +21,10 @@ int main()
     int OUTPUT_CODE = 0; // 0 indicates success, > 0 is failure
 
     // create the object: manifold 2-D mesh example
-    TriMesh(MultiMesh);
-    // Mesh<2>  MultiMesh(0,0,1,0); // alternative
+    BasePtCoord<2> VX;
+    TriMesh(TM,VX);
+    //Mesh<2,2>  TM(&VX); // alternative
     
-    // access the parts we need
-    BaseMesh<2>& TM = MultiMesh.TriMesh[0];
-    BasePtCoord<2>& VX = MultiMesh.Vtx;
-
     // define the cell connectivity
     TM.Reserve_Cells(4);
     TM.Append_Cell(0,1,4);
@@ -306,7 +303,102 @@ int main()
         cout << endl;
     }
     cout << endl;
-
+    
+    // test: Barycentric_To_Cartesian
+    const CellIndType CI_A[2] = {0, 2};
+    const PointType   PB_in[6] = {(1.0/3.0), (1.0/3.0), (1.0/3.0),   0.2, 0.6, 0.2}; // two sets of barycentric coordinates
+    PointType  PC_out[4];
+    TM.Barycentric_To_Cartesian(2, CI_A, PB_in, PC_out);
+    cout << "These are the two points (from given barycenters):" << endl;
+    for (CellIndType ii = 0; ii < 2; ++ii)
+        cout << "Point (cartesian): (" << PC_out[2*ii + 0] << ", " << PC_out[2*ii + 1] << ")" << endl;
+    const bool PC_CHK = (abs(PC_out[0]-0.5) > 1E-14) || (abs(PC_out[1]-(1.0/6.0)) > 1E-14)
+                     || (abs(PC_out[2]-0.3) > 1E-14) || (abs(PC_out[3]-0.9) > 1E-14);
+    if (PC_CHK)
+    {
+        cout << "Incorrect!  The two points should be: (0.5, 0.1666667) and (0.3, 0.9)!" << endl;
+        OUTPUT_CODE = 14;
+    }
+    cout << endl;
+    
+    // test: Cartesian_To_Barycentric
+    const CellIndType CI_B[2] = {1, 3};
+    const PointType   PC_in[4] = {0.75, 0.5,   0.2, 0.6}; // two sets of cartesian coordinates
+    PointType  PB_out[6];
+    TM.Cartesian_To_Barycentric(2, CI_B, PC_in, PB_out);
+    cout << "These are the two points (from given cartesian coordinates):" << endl;
+    for (CellIndType ii = 0; ii < 2; ++ii)
+        cout << "Point (barycentric): (" << PB_out[3*ii + 0] << ", " << PB_out[3*ii + 1] << ", " << PB_out[3*ii + 2] << ")" << endl;
+    const bool PB_CHK = (abs(PB_out[0]-0.25) > 1E-14) || (abs(PB_out[1]-0.25) > 1E-14) || (abs(PB_out[2]-0.5) > 1E-14)
+                     || (abs(PB_out[3]-0.4)  > 1E-14) || (abs(PB_out[4]-0.2)  > 1E-14) || (abs(PB_out[5]-0.4) > 1E-14);
+    if (PB_CHK)
+    {
+        cout << "Incorrect!  The two points should be: (0.25, 0.25, 0.5) and (0.4, 0.2, 0.4)!" << endl;
+        OUTPUT_CODE = 15;
+    }
+    cout << endl;
+    
+    // test: Circumcenter
+    PointType  CB_out[6];
+    RealType   CR_out[2];
+    TM.Circumcenter(2, CI_A, CB_out, CR_out);
+    cout << "Here are circumcenters and circumradii for cell #s: " << CI_A[0] << " and " << CI_A[1] << ":" << endl;
+    for (CellIndType ii = 0; ii < 2; ++ii)
+        cout << "circumcenter (barycentric): (" << CB_out[3*ii + 0] << ", " << CB_out[3*ii + 1] << ", " << CB_out[3*ii + 2] << ")" 
+             << ", circumradius: " << CR_out[ii] << endl;
+    const bool CB_CHK = (abs(CB_out[0]-0.5) > 1E-14) || (abs(CB_out[1]-0.5) > 1E-14) || (abs(CB_out[2]-0.0) > 1E-14)
+                     || (abs(CB_out[3]-0.5) > 1E-14) || (abs(CB_out[4]-0.5) > 1E-14) || (abs(CB_out[5]-0.0) > 1E-14)
+                     || (abs(CR_out[0]-0.5) > 1E-14) || (abs(CR_out[1]-0.5) > 1E-14);
+    if (CB_CHK)
+    {
+        cout << "Incorrect!  The two circumcenters should be: (0.5, 0.5, 0.0) and (0.5, 0.5, 0.0)," << endl;
+        cout << "            with a circumradius of 0.5 each!" << endl;
+        OUTPUT_CODE = 16;
+    }
+    cout << endl;
+    
+    // test: incenter
+    PointType  IB_out[6];
+    RealType   IR_out[2];
+    TM.Incenter(2, CI_A, IB_out, IR_out);
+    cout << "Here are incenters and inradii for cell #s: " << CI_A[0] << " and " << CI_A[1] << ":" << endl;
+    for (CellIndType ii = 0; ii < 2; ++ii)
+        cout << "incenter (barycentric): (" << IB_out[3*ii + 0] << ", " << IB_out[3*ii + 1] << ", " << IB_out[3*ii + 2] << ")" 
+             << ", inradius: " << IR_out[ii] << endl;
+    const bool IB_CHK = (abs(IB_out[0]-0.292893218813452) > 1E-14) || (abs(IB_out[1]-0.292893218813452) > 1E-14)
+                     || (abs(IB_out[2]-0.414213562373095) > 1E-14)
+                     || (abs(IB_out[3]-0.292893218813452) > 1E-14) || (abs(IB_out[4]-0.292893218813452) > 1E-14)
+                     || (abs(IB_out[5]-0.414213562373095) > 1E-14)
+                     || (abs(IR_out[0]-0.207106781186548) > 1E-14) || (abs(IR_out[1]-0.207106781186548) > 1E-14);
+    if (IB_CHK)
+    {
+        cout << "Incorrect!  The two incenters should be (both): ( (1/sqrt(2))/(1+sqrt(2)), (1/sqrt(2))/(1+sqrt(2)), 1/(1+sqrt(2)))," << endl;
+        cout << "            with an inradius of (1/2) / (1+sqrt(2)) for both!" << endl;
+        OUTPUT_CODE = 17;
+    }
+    cout << endl;
+    
+    // test: diameter
+    const CellIndType CI_all[4] = {0, 1, 2, 3};
+    RealType   Diam_out[4];
+    TM.Diameter(4, CI_all, Diam_out);
+    cout << "Here are the diameters for these cells: " << endl;
+    for (CellIndType ii = 0; ii < 4; ++ii)
+        cout << "Cell #" << CI_all[ii] << ",  Diameter: " << Diam_out[ii] << endl;
+    const bool DIAM_CHK = (abs(Diam_out[0]-1.0) > 1E-14) || (abs(Diam_out[1]-1.0) > 1E-14)
+                       || (abs(Diam_out[2]-1.0) > 1E-14) || (abs(Diam_out[3]-1.0) > 1E-14);
+    if (DIAM_CHK)
+    {
+        cout << "Incorrect!  The diameters should be 1.0 for all." << endl;
+        OUTPUT_CODE = 18;
+    }
+    cout << endl;
+    
+    
+    
+    
+    
+    
     if (OUTPUT_CODE==0)
         cout << "Unit test is successful!" << endl;
     else

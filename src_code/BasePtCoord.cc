@@ -77,6 +77,10 @@ public:
     inline const PointType* Get_Point_coord(const VtxIndType&) const;
     inline const VtxCoordType<GEO_DIM>& Get_Point(const VtxIndType&) const;
 
+    // get the cartesian box that bounds all the points
+    void Bounding_Box(PointType*, PointType*) const;
+    void Bounding_Box(const VtxIndType&, const VtxIndType*, PointType*, PointType*) const;
+    
     // print out vertex coordinates
     void Display_Vtx_Coord(const VtxIndType& vi=NULL_Vtx) const;
 
@@ -298,6 +302,59 @@ inline const VtxCoordType<GEO_DIM>& BPC<GEO_DIM>::Get_Point(const VtxIndType& vi
     assert((vi < Num_Points()) && (vi!=NULL_Vtx));
 
     return Point[vi];
+}
+
+/***************************************************************************************/
+/* Get the bounding box of all the vertex coordinates.
+   Output: min and max limits of the coordinates (component-wise).
+   example:  if GEO_DIM==3, then
+   BB_min[] = {X_min, Y_min, Z_min},
+   BB_max[] = {X_max, Y_max, Z_max}. */
+template <SmallIndType GEO_DIM>
+void BPC<GEO_DIM>::Bounding_Box(PointType* BB_min, PointType* BB_max) const
+{
+    // initialize the box with the 0th point
+    const VtxCoord_DIM& P0 = Point[0];
+    for (SmallIndType ii = 0; ii < GEO_DIM; ++ii)
+    {
+        BB_min[ii] = P0.coord[ii];
+        BB_max[ii] = P0.coord[ii];
+    }
+    
+    // now loop through the rest...
+    for (std::vector<VtxCoord_DIM>::iterator it = Point.begin(); it != Point.end(); ++it)
+    {
+        const VtxCoord_DIM& PT = *it;
+        for (SmallIndType ii = 0; ii < GEO_DIM; ++ii)
+        {
+            if (PT.coord[ii] < BB_min[ii]) BB_min[ii] = PT.coord[ii];
+            if (PT.coord[ii] > BB_max[ii]) BB_max[ii] = PT.coord[ii];
+        }
+    }
+}
+/* this allows to only look through a subset of vertex indices in "VI". */
+template <SmallIndType GEO_DIM>
+void BPC<GEO_DIM>::Bounding_Box(const VtxIndType& Num_Vtx, const VtxIndType* VI,
+                                PointType* BB_min, PointType* BB_max) const
+{
+    // initialize the box with the 0th point
+    const VtxCoord_DIM& P0 = Point[VI[0]];
+    for (SmallIndType ii = 0; ii < GEO_DIM; ++ii)
+    {
+        BB_min[ii] = P0.coord[ii];
+        BB_max[ii] = P0.coord[ii];
+    }
+    
+    // now loop through the rest...
+    for (VtxIndType vi = 0; vi < Num_Vtx; ++vi)
+    {
+        const VtxCoord_DIM& PT = Point[VI[vi]];
+        for (SmallIndType ii = 0; ii < GEO_DIM; ++ii)
+        {
+            if (PT.coord[ii] < BB_min[ii]) BB_min[ii] = PT.coord[ii];
+            if (PT.coord[ii] > BB_max[ii]) BB_max[ii] = PT.coord[ii];
+        }
+    }
 }
 
 /***************************************************************************************/

@@ -332,6 +332,11 @@ struct CoordType // this is an interface
     virtual CoordType& Set()=0;
     // print
     virtual void Print() const = 0;
+    
+    // take the difference
+    //virtual CoordType Subtract(const CoordType&) const = 0;
+    // get the (Euclidean) length
+    virtual RealType Length() const = 0;
 };
 /*** here is the actual concrete base class ***/
 template<SmallIndType GEO_DIM>
@@ -408,6 +413,26 @@ struct VtxCoordType : CoordType
             std::cout << ", " << coord[ii];
         std::cout << ")" << std::endl;
     };
+    
+    // take the difference
+    inline VtxCoordType<GEO_DIM> Subtract(const VtxCoordType<GEO_DIM>& IN) const
+    {
+        VtxCoordType<GEO_DIM> OUT;
+        for (SmallIndType ii = 0; ii < GEO_DIM; ++ii)
+            OUT.coord[ii] = coord[ii] - IN.coord[ii];
+
+        return OUT;
+    }
+    // get the (Euclidean) length
+    inline RealType Length() const
+    {
+        RealType LEN = 0.0;
+        for (SmallIndType ii = 0; ii < GEO_DIM; ++ii)
+            LEN += coord[ii]*coord[ii]; // the square
+        LEN = std::sqrt(LEN); // square root!
+        
+        return LEN;
+    }
 };
 
 // SWW: can maybe have some more convenience routines here...
