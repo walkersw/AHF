@@ -5,7 +5,7 @@
    
    Note: this routine is limited to simplex meshes: line-segment, triangle, tetrahedron.
 
-   Copyright (c) 12-15-2016,  Shawn W. Walker
+   Copyright (c) 08-28-2020,  Shawn W. Walker
 ============================================================================================
 */
 
@@ -33,17 +33,17 @@ public:
 	void Write_Binary_VTK(std::string, std::string, const BaseMesh<CELL_DIM>&, const BasePtCoord<GEO_DIM>&);
 	
 	// read a VTK file to determine the type of mesh and store RAW data
-    template <SmallIndType GEO_DIM>
-	void Read_ASCII_VTK(const std::string&, Mesh<GEO_DIM>&);
-    template <SmallIndType GEO_DIM>
-	void Read_BINARY_VTK(const std::string&, Mesh<GEO_DIM>&);
+    template <SmallIndType CELL_DIM, SmallIndType GEO_DIM>
+	void Read_ASCII_VTK(const std::string&, Mesh<CELL_DIM, GEO_DIM>&);
+    template <SmallIndType CELL_DIM, SmallIndType GEO_DIM>
+	void Read_BINARY_VTK(const std::string&, Mesh<CELL_DIM, GEO_DIM>&);
 
 	// convert raw data to a Mesh object (using Mesh)
-    template <SmallIndType GEO_DIM>
+    template <SmallIndType CELL_DIM, SmallIndType GEO_DIM>
 	void Convert_to_Mesh_Object(const SmallIndType&, const SmallIndType&,
                                 const CellIndType&, const VtxIndType&,
                                 const std::vector<CellIndType>&,
-                                const std::vector<PointType>&, Mesh<GEO_DIM>&);
+                                const std::vector<PointType>&, Mesh<CELL_DIM, GEO_DIM>&);
 
 private:
 
@@ -275,8 +275,8 @@ void MESH_IO::Write_Binary_VTK(std::string output_filename,
 
 /***************************************************************************************/
 /* scan the cells and vertices of VTK file and store them in a Mesh. (ASCII format) */
-template <SmallIndType GEO_DIM>
-void MESH_IO::Read_ASCII_VTK(const std::string& input_filename, Mesh<GEO_DIM>& TM)
+template <SmallIndType CELL_DIM, SmallIndType GEO_DIM>
+void MESH_IO::Read_ASCII_VTK(const std::string& input_filename, Mesh<CELL_DIM, GEO_DIM>& TM)
 {
 	SmallIndType TopDim = 0;
 	SmallIndType GeoDim = 0;
@@ -409,8 +409,8 @@ void MESH_IO::Read_ASCII_VTK(const std::string& input_filename, Mesh<GEO_DIM>& T
 
 /***************************************************************************************/
 /* scan the cells and vertices of VTK file and store them in a Mesh. (BINARY format) */
-template <SmallIndType GEO_DIM>
-void MESH_IO::Read_BINARY_VTK(const std::string& input_filename, Mesh<GEO_DIM>& TM)
+template <SmallIndType CELL_DIM, SmallIndType GEO_DIM>
+void MESH_IO::Read_BINARY_VTK(const std::string& input_filename, Mesh<CELL_DIM, GEO_DIM>& TM)
 {
 	SmallIndType TopDim = 0;
 	SmallIndType GeoDim = 0;
@@ -547,14 +547,14 @@ void MESH_IO::Read_BINARY_VTK(const std::string& input_filename, Mesh<GEO_DIM>& 
 
 /***************************************************************************************/
 /* convert raw mesh data into Mesh object. */
-template <SmallIndType GEO_DIM>
+template <SmallIndType CELL_DIM, SmallIndType GEO_DIM>
 void MESH_IO::Convert_to_Mesh_Object(const SmallIndType& TopDim,
                                      const SmallIndType& GeoDim,
                                      const CellIndType&  Num_CL,
                                      const VtxIndType&   Num_V,
                                      const std::vector<CellIndType>&  Cell_Data,
                                      const std::vector<PointType>&    Vtx_Coord,
-                                     Mesh<GEO_DIM>&                   TM)
+                                     Mesh<CELL_DIM, GEO_DIM>&         TM)
 {
 	// make sure vertex coordinate data is the proper size
 	const VtxIndType Vtx_Coord_Size = 3 * Num_V;
@@ -578,60 +578,17 @@ void MESH_IO::Convert_to_Mesh_Object(const SmallIndType& TopDim,
 		std::exit( 1 );
 	}
     
-	if (TopDim==1)
+    // fill in the cell data
+    TM.Reserve_Cells(Num_CL);
+    for (CellIndType ci = 0; ci < Num_CL; ++ci)
     {
-        // fill in the cell data
-        BaseMesh<1> Temp_M;
-        Temp_M.Reserve_Cells(Num_CL);
-        for (CellIndType ci = 0; ci < Num_CL; ++ci)
-        {
-            // read cell vertex indices
-            VtxIndType c_vtx[4] = {0, 0, 0, 0};
-            for (SmallIndType kk = 0; kk < (TopDim+1); ++kk)
-                c_vtx[kk] = Cell_Data[(TopDim+1)*ci + kk];
-            Temp_M.Append_Cell(c_vtx);
-        }
-        TM.IntMesh.push_back(Temp_M);
+        // read cell vertex indices
+        VtxIndType c_vtx[4] = {0, 0, 0, 0};
+        for (SmallIndType kk = 0; kk < (TopDim+1); ++kk)
+            c_vtx[kk] = Cell_Data[(TopDim+1)*ci + kk];
+        TM.Append_Cell(c_vtx);
     }
-	else if (TopDim==2)
-    {
-        // fill in the cell data
-        BaseMesh<2> Temp_M;
-        Temp_M.Reserve_Cells(Num_CL);
-        for (CellIndType ci = 0; ci < Num_CL; ++ci)
-        {
-            // read cell vertex indices
-            VtxIndType c_vtx[4] = {0, 0, 0, 0};
-            for (SmallIndType kk = 0; kk < (TopDim+1); ++kk)
-                c_vtx[kk] = Cell_Data[(TopDim+1)*ci + kk];
-            Temp_M.Append_Cell(c_vtx);
-        }
-        TM.TriMesh.push_back(Temp_M);
-    }
-    else if (TopDim==3)
-    {
-        // fill in the cell data
-        BaseMesh<3> Temp_M;
-        Temp_M.Reserve_Cells(Num_CL);
-        for (CellIndType ci = 0; ci < Num_CL; ++ci)
-        {
-            // read cell vertex indices
-            VtxIndType c_vtx[4] = {0, 0, 0, 0};
-            for (SmallIndType kk = 0; kk < (TopDim+1); ++kk)
-                c_vtx[kk] = Cell_Data[(TopDim+1)*ci + kk];
-            Temp_M.Append_Cell(c_vtx);
-        }
-        TM.TetMesh.push_back(Temp_M);
-    }
-	else
-	{
-		std::cerr << std::endl;
-		std::cerr << "Convert_to_Mesh_Object - fatal error!" << std::endl;
-		std::cerr << "      Mesh Raw Data:  " <<
-					 " has invalid topological dimension!" << std::endl;
-		std::exit( 1 );	
-	}
-	
+
     if (GEO_DIM < GeoDim)
 	{
 		std::cerr << std::endl;
@@ -650,14 +607,15 @@ void MESH_IO::Convert_to_Mesh_Object(const SmallIndType& TopDim,
 	}
     
 	// fill in the vertex coordinate data
-	TM.Vtx.Init_Points(Num_V);
+    BasePtCoord<GEO_DIM>* Vtx_ptr = TM.Get_Vertex_Data_Ptr();
+	Vtx_ptr->Init_Points(Num_V);
 	for (VtxIndType vi = 0; vi < Num_V; ++vi)
     {
 		// read vertex coordinates
 		PointType coord[3] = {0.0, 0.0, 0.0};
 		for (SmallIndType kk = 0; kk < 3; ++kk)
 			coord[kk] = Vtx_Coord[3*vi + kk];
-		TM.Vtx.Set_Coord(vi, coord);
+		Vtx_ptr->Set_Coord(vi, coord);
 	}
 }
 

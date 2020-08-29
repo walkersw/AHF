@@ -1,0 +1,4 @@
+CC=g++
+EIGEN_DIR=$$HOME/eigen-3.3.7/
+INC_DIR=-I../src_code/ -I$(EIGEN_DIR)
+CFLAGS=-Wall -Wextra -Werror -g $(INC_DIR)

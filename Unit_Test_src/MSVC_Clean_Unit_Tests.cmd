@@ -1,4 +1,4 @@
-rem script to run the unit tests.
+rem script to delete the unit test executables.
 @echo off
 
 @setlocal EnableDelayedExpansion
@@ -22,19 +22,19 @@ rem echo %unit_test_dirs[0]%
 rem loop through all unit test directories
 @for /l %%n in (0,1,3) do @(
   @echo --------------------------------------------------
-  @echo Run unit test in this directory:  !unit_test_dirs[%%n]!
+  @echo Delete unit test .exe in this directory:  !unit_test_dirs[%%n]!
   cd !unit_test_dirs[%%n]!
-  call !unit_test_files[%%n]!.exe
+  call del !unit_test_files[%%n]!.exe
   @if !errorlevel! equ 0 (
-    @echo *Successfully* completed this unit test: !unit_test_files[%%n]!
+    @echo *Successfully* deleted this unit test: !unit_test_files[%%n]!
   ) else (
     @echo The error code is:
 	@echo !errorlevel!
-    @echo This unit test *failed*: !unit_test_files[%%n]!
+    @echo This unit test did not get deleted: !unit_test_files[%%n]!
 	@echo --------------------------------------------------
 	exit /b
   )
   cd ..
 )
 @echo --------------------------------------------------
-@echo All unit tests completed successfully.
+@echo All unit test executables erased successfully.

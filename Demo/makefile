@@ -1,9 +1,11 @@
 include ../linux_makefile_hdr
 
-all: ./Vtx2Halffacet/test_Vertex2Halffacet_Class.o \
-./Mesh_2D_Manifold/test_2D_Manifold_Mesh_1.o \
-./Mesh_2D_Nonmanifold/test_2D_Nonmanifold_1.o \
-./Mesh_2D_Nonmanifold/test_2D_Nonmanifold_2.o
+all: ./BaseMesh_0D/BaseMesh_0D_example.o \
+./BaseMesh_1D/BaseMesh_1D_example.o \
+./BaseMesh_2D/BaseMesh_2D_example.o \
+./BaseMesh_3D/BaseMesh_3D_example.o \
+./BasePtCoord_2D/BasePtCoord_2D_example.o \
+./Simple_Mesh_2D/mesh_demo.o
 
 %.o: %.cpp
 	$(CC) $(CFLAGS) $< -o $@

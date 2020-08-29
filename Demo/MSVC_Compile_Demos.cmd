@@ -29,6 +29,7 @@ rem loop through all demo directories
 @for /l %%n in (0,1,5) do @(
   @echo --------------------------------------------------
   @echo Compile this directory:  !demo_dirs[%%n]!
+  @echo Compile this file:  !demo_files[%%n]!
   cd !demo_dirs[%%n]!
   call ../MSVC_Compile !demo_files[%%n]!
   cd ..

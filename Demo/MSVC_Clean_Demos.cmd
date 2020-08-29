@@ -28,15 +28,15 @@ rem echo %demo_dirs[0]%
 rem loop through all demo directories
 @for /l %%n in (0,1,5) do @(
   @echo --------------------------------------------------
-  @echo Run demo in this directory:  !demo_dirs[%%n]!
+  @echo Delete demo .exe in this directory:  !demo_dirs[%%n]!
   cd !demo_dirs[%%n]!
   call del !demo_files[%%n]!.exe
   @if !errorlevel! equ 0 (
-    @echo *Successfully* deleted this demo: !demo_dirs[%%n]!
+    @echo *Successfully* deleted this demo: !demo_files[%%n]!
   ) else (
     @echo The error code is:
 	@echo !errorlevel!
-    @echo This demo did not get deleted: !demo_dirs[%%n]!
+    @echo This demo did not get deleted: !demo_files[%%n]!
 	@echo --------------------------------------------------
 	exit /b
   )

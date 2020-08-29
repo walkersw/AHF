@@ -77,6 +77,9 @@ public:
     inline const PointType* Get_Point_coord(const VtxIndType&) const;
     inline const VtxCoordType<GEO_DIM>& Get_Point(const VtxIndType&) const;
 
+    // re-index the vertex coordinates
+    void Reindex_Vertices(const VtxIndType&, const VtxIndType*, const VtxIndType*);
+
     // get the cartesian box that bounds all the points
     void Bounding_Box(PointType*, PointType*) const;
     void Bounding_Box(const VtxIndType&, const VtxIndType*, PointType*, PointType*) const;
@@ -214,6 +217,7 @@ void BPC<GEO_DIM>::Set_Coord(const VtxIndType& vi, const PointType* vtx_coord)
     if (!Is_Point_Open())
         return;
 
+    std::cout << "vi: " << vi << ", Num_Points: " << Num_Points() << "." << std::endl;
     assert( vi < Num_Points() );
     Point[vi].Set(vtx_coord);
 }
@@ -305,6 +309,48 @@ inline const VtxCoordType<GEO_DIM>& BPC<GEO_DIM>::Get_Point(const VtxIndType& vi
 }
 
 /***************************************************************************************/
+/* Re-index the vertex coordinates:
+   old_indices[ii] gets mapped to new_indices[ii], for 0 <= ii < num_indices. */
+template <SmallIndType GEO_DIM>
+void BPC<GEO_DIM>::Reindex_Vertices(const VtxIndType& num_indices,
+                                    const VtxIndType* old_indices, const VtxIndType* new_indices)
+{
+    // basic check
+    if (num_indices > Num_Points())
+    {
+        std::cerr << "Fatal error in 'BasePtCoord.Reindex_Vertices'!" << std::endl;
+        std::cerr << "    The given list of indices is longer than the number of current vertices." << std::endl;
+        std::exit(1);
+    }
+    
+    // find the max old and new vertex indices
+    const VtxIndType MAX_old_vi = *std::max_element(old_indices, old_indices + num_indices);
+    const VtxIndType MAX_new_vi = *std::max_element(new_indices, new_indices + num_indices);
+    
+    // basic check
+    if (MAX_old_vi >= Num_Points())
+    {
+        std::cerr << "Fatal error in 'BasePtCoord.Reindex_Vertices'!" << std::endl;
+        std::cerr << "    The maximum old vertex index is greater than the current last vertex index." << std::endl;
+        std::exit(1);
+    }
+    
+    // copy over
+    std::vector<VtxCoord_DIM>  Point_old(Point.begin(), Point.end());
+    // re-init the Point list
+    Clear(); // clear the Point data
+    Init_Points(MAX_new_vi+1); // need to add +1 because this sets the number of points
+    
+    // now map vertices over
+    for (VtxIndType ii = 0; ii < num_indices; ++ii)
+    {
+        const VtxIndType& old_vi = old_indices[ii];
+        const VtxIndType& new_vi = new_indices[ii];
+        Set_Coord(new_vi, Point_old[old_vi].coord);
+    }
+}
+
+/***************************************************************************************/
 /* Get the bounding box of all the vertex coordinates.
    Output: min and max limits of the coordinates (component-wise).
    example:  if GEO_DIM==3, then
@@ -322,7 +368,7 @@ void BPC<GEO_DIM>::Bounding_Box(PointType* BB_min, PointType* BB_max) const
     }
     
     // now loop through the rest...
-    for (std::vector<VtxCoord_DIM>::iterator it = Point.begin(); it != Point.end(); ++it)
+    for (typename std::vector<VtxCoord_DIM>::iterator it = Point.begin(); it != Point.end(); ++it)
     {
         const VtxCoord_DIM& PT = *it;
         for (SmallIndType ii = 0; ii < GEO_DIM; ++ii)

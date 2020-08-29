@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# delete all the demo executables
+# delete all the test executables
 for dir in ./*/; do
   echo -----------------------------------------------------------------------
   echo "Go in this sub-dir: " $dir
@@ -10,5 +10,5 @@ for dir in ./*/; do
   cd ..
 done
 echo -----------------------------------------------------------------------
-echo "All demo executables deleted."
+echo "All unit test executables deleted."
 exit 0

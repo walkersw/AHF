@@ -53,13 +53,10 @@ int main()
     // init output code
     int OUTPUT_CODE = 0; // 0 indicates success, > 0 is failure
 
-    // create the object: a 2-D mesh in \R^2 (the x-y plane)
-    TriMesh(MultiMesh);
-    // Mesh<2>  MultiMesh(0,1,0); // alternative
-    
-    // access the parts we need
-    BaseMesh<2>& TM_w = MultiMesh.TriMesh[0];
-    BasePtCoord<2>& VX = MultiMesh.Vtx;
+    // create the object: manifold 2-D mesh example
+    BasePtCoord<2> VX;
+    TriMesh(TM_w,VX);
+    //Mesh<2,2>  TM(&VX); // alternative
 
     // define the cell connectivity (4 cells)
     const VtxIndType  Cell_Conn[] = {0,1,4,  1,2,4,  2,3,4,  3,0,4};

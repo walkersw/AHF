@@ -188,6 +188,8 @@ public:
     VtxIndType Size() const { return (VtxIndType) VtxMap.size(); };
     // return const reference to internal data
     const std::vector<VtxHalfFacetType>& Get_VtxMap() const { return VtxMap; };
+    // return non-const reference to internal data
+    std::vector<VtxHalfFacetType>& Get_VtxMap() { return VtxMap; };
     // allocate space in the Vertex-to-HalfFacet map
     void Reserve(const VtxIndType&);
 

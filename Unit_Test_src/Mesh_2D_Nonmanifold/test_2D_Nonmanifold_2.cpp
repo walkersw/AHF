@@ -2,11 +2,11 @@
 ============================================================================================
    This is a unit test for the AHF data structure implementation.
 
-   This example stores a 2-D non-manifold mesh (consisting of 4 triangles) that has
-   1 non-manifold edge and 0 non-manifold vertices.  It also does some basic processing.
-   See 'Non_Manifold_Triangle_Mesh_1.jpg' for a picture of the mesh embedded in 3-D.
+   This example stores a 2-D non-manifold mesh (consisting of 7 triangles) that has
+   2 non-manifold edges and 1 non-manifold vertex.  It also does some basic processing.
+   See 'Non_Manifold_Triangle_Mesh_2.jpg' for a picture of the mesh embedded in 3-D.
 
-   Copyright (c) 12-17-2016,  Shawn W. Walker
+   Copyright (c) 08-27-2020,  Shawn W. Walker
 ============================================================================================
 */
 
@@ -20,29 +20,33 @@ int main()
     // init output code
     int OUTPUT_CODE = 0; // 0 indicates success, > 0 is failure
 
-    // create the object: manifold 2-D surface mesh example
-    SurfaceMesh(MultiMesh);
-    // Mesh<3>  MultiMesh(0,0,1,0); // alternative
-
-    // access the parts we need
-    BaseMesh<2>& TM = MultiMesh.TriMesh[0];
-    BasePtCoord<3>& VX = MultiMesh.Vtx;
+    // create the object: non-manifold surface 2-D mesh example
+    BasePtCoord<3> VX;
+    SurfaceMesh(TM,VX);
+    //Mesh<2,3>  TM(&VX); // alternative
 
     // non-manifold 2-D mesh example
-    TM.Reserve_Cells(4);
-    TM.Append_Cell(0,1,2);
-    TM.Append_Cell(1,3,2);
-    TM.Append_Cell(1,4,2);
-    TM.Append_Cell(1,2,5);
+    TM.Reserve_Cells(7);
+    TM.Append_Cell(0,1,5);
+    TM.Append_Cell(5,2,1);
+    TM.Append_Cell(1,5,3);
+    TM.Append_Cell(4,5,1);
+    TM.Append_Cell(9,6,5);
+    TM.Append_Cell(9,5,7);
+    TM.Append_Cell(8,9,5);
 
     // now add the vertex point coordinates
-    VX.Init_Points(6);
-    VX.Set_Coord(0, -1.0, 0.5, 0.0);
-    VX.Set_Coord(1,  0.0, 0.0, 0.0);
-    VX.Set_Coord(2,  0.0, 1.0, 0.0);
-    VX.Set_Coord(3,  1.0, 0.5, 0.0);
-    VX.Set_Coord(4,  0.0, 0.5, 1.0);
-    VX.Set_Coord(5,  0.0, 0.5,-1.0);
+    VX.Init_Points(10);
+    VX.Set_Coord(0, -0.5, 0.0,-1.0);
+    VX.Set_Coord(1, -1.0, 0.0, 0.0);
+    VX.Set_Coord(2, -0.5, 1.0, 0.0);
+    VX.Set_Coord(3, -0.5, 0.0, 1.0);
+    VX.Set_Coord(4, -0.5,-1.0, 0.0);
+    VX.Set_Coord(5,  0.0, 0.0, 0.0);
+    VX.Set_Coord(6,  0.5, 0.2, 1.0);
+    VX.Set_Coord(7,  0.5,-0.1,-1.0);
+    VX.Set_Coord(8,  0.5,-1.0, 0.0);
+    VX.Set_Coord(9,  1.0, 0.0, 0.0);
 
     // now display coordinates
     cout << endl;
@@ -56,31 +60,38 @@ int main()
     TM.Display_v2hfs();
 
     // check 'v2hfs' against reference data
-    VtxHalfFacetType v2hfs_REF[12];
+    VtxHalfFacetType v2hfs_REF[21];
     v2hfs_REF[ 0].Set(1,0,2);
-    v2hfs_REF[ 1].Set(2,0,0);
-    v2hfs_REF[ 2].Set(2,0,1);
-    v2hfs_REF[ 3].Set(2,1,1);
-    v2hfs_REF[ 4].Set(2,2,1);
-    v2hfs_REF[ 5].Set(2,3,2);
-    v2hfs_REF[ 6].Set(3,1,0);
-    v2hfs_REF[ 7].Set(3,1,2);
-    v2hfs_REF[ 8].Set(4,2,0);
-    v2hfs_REF[ 9].Set(4,2,2);
+    v2hfs_REF[ 1].Set(2,1,0);
+    v2hfs_REF[ 2].Set(3,2,1);
+    v2hfs_REF[ 3].Set(4,3,1);
+    v2hfs_REF[ 4].Set(5,0,0);
+    v2hfs_REF[ 5].Set(5,0,1);
+    v2hfs_REF[ 6].Set(5,1,1);
+    v2hfs_REF[ 7].Set(5,1,2);
+    v2hfs_REF[ 8].Set(5,2,0);
+    v2hfs_REF[ 9].Set(5,2,2);
     v2hfs_REF[10].Set(5,3,0);
-    v2hfs_REF[11].Set(5,3,1);
+    v2hfs_REF[11].Set(5,3,2);
+    v2hfs_REF[12].Set(6,4,0);
+    v2hfs_REF[13].Set(7,5,0);
+    v2hfs_REF[14].Set(8,6,1);
+    v2hfs_REF[15].Set(9,4,1);
+    v2hfs_REF[16].Set(9,4,2);
+    v2hfs_REF[17].Set(9,5,1);
+    v2hfs_REF[18].Set(9,5,2);
+    v2hfs_REF[19].Set(9,6,0);
+    v2hfs_REF[20].Set(9,6,2);
     // error check
     const Vtx2HalfFacet_Mapping& c_V2HF_Map = TM.Get_v2hfs();
     const std::vector<VtxHalfFacetType>& c_v2hfs = c_V2HF_Map.Get_VtxMap();
     for (VtxIndType jj = 0; jj < c_v2hfs.size(); ++jj)
-    {
         if (!c_v2hfs[jj].Equal(v2hfs_REF[jj]))
         {
             cout << "Intermediate data 'v2hfs' failed!" << endl;
             OUTPUT_CODE = 1;
             break;
         }
-    }
 
     // fill out the sibling half-facet data in 'Cell'
     TM.Build_Sibling_HalfFacets_DEBUG();
@@ -91,24 +102,36 @@ int main()
     cout << endl;
 
     // check 'Cell' against reference data
-    CellSimplexType<2> Cell_REF[4];
+    CellSimplexType<2> Cell_REF[7];
     HalfFacetType hf;
     // Cell #1
     Cell_REF[ 0].Set(0,0,hf.Set(1,1));
     Cell_REF[ 0].Set(1,1,hf.Set());
-    Cell_REF[ 0].Set(2,2,hf.Set());
+    Cell_REF[ 0].Set(2,5,hf.Set());
     // Cell #2
-    Cell_REF[ 1].Set(0,1,hf.Set());
-    Cell_REF[ 1].Set(1,3,hf.Set(2,1));
-    Cell_REF[ 1].Set(2,2,hf.Set());
+    Cell_REF[ 1].Set(0,5,hf.Set());
+    Cell_REF[ 1].Set(1,2,hf.Set(2,2));
+    Cell_REF[ 1].Set(2,1,hf.Set());
     // Cell #3
     Cell_REF[ 2].Set(0,1,hf.Set());
-    Cell_REF[ 2].Set(1,4,hf.Set(3,2));
-    Cell_REF[ 2].Set(2,2,hf.Set());
+    Cell_REF[ 2].Set(1,5,hf.Set());
+    Cell_REF[ 2].Set(2,3,hf.Set(3,0));
     // Cell #4
-    Cell_REF[ 3].Set(0,1,hf.Set());
-    Cell_REF[ 3].Set(1,2,hf.Set());
-    Cell_REF[ 3].Set(2,5,hf.Set(0,0));
+    Cell_REF[ 3].Set(0,4,hf.Set(0,0));
+    Cell_REF[ 3].Set(1,5,hf.Set());
+    Cell_REF[ 3].Set(2,1,hf.Set());
+    // Cell #5
+    Cell_REF[ 4].Set(0,9,hf.Set());
+    Cell_REF[ 4].Set(1,6,hf.Set(5,2));
+    Cell_REF[ 4].Set(2,5,hf.Set());
+    // Cell #6
+    Cell_REF[ 5].Set(0,9,hf.Set());
+    Cell_REF[ 5].Set(1,5,hf.Set());
+    Cell_REF[ 5].Set(2,7,hf.Set(6,0));
+    // Cell #7
+    Cell_REF[ 6].Set(0,8,hf.Set(4,1));
+    Cell_REF[ 6].Set(1,9,hf.Set());
+    Cell_REF[ 6].Set(2,5,hf.Set());
     // error check
     for (CellIndType cc = 0; cc < TM.Num_Cells(); ++cc)
     {
@@ -132,13 +155,18 @@ int main()
     cout << endl;
 
     // check 'Vtx2HalfFacets' against reference data
-    VtxHalfFacetType Vtx2HalfFacets_REF[6];
-    Vtx2HalfFacets_REF[ 0].Set( 0,0,2);
-    Vtx2HalfFacets_REF[ 1].Set( 1,3,1);
-    Vtx2HalfFacets_REF[ 2].Set( 2,3,0);
-    Vtx2HalfFacets_REF[ 3].Set( 3,1,2);
-    Vtx2HalfFacets_REF[ 4].Set( 4,2,2);
-    Vtx2HalfFacets_REF[ 5].Set( 5,3,1);
+    VtxHalfFacetType Vtx2HalfFacets_REF[11];
+    Vtx2HalfFacets_REF[ 0].Set(0,0,2);
+    Vtx2HalfFacets_REF[ 1].Set(1,3,1);
+    Vtx2HalfFacets_REF[ 2].Set(2,1,2);
+    Vtx2HalfFacets_REF[ 3].Set(3,2,1);
+    Vtx2HalfFacets_REF[ 4].Set(4,3,2);
+    Vtx2HalfFacets_REF[ 5].Set(5,3,2);
+    Vtx2HalfFacets_REF[ 6].Set(5,6,1);
+    Vtx2HalfFacets_REF[ 7].Set(6,4,2);
+    Vtx2HalfFacets_REF[ 8].Set(7,5,1);
+    Vtx2HalfFacets_REF[ 9].Set(8,6,2);
+    Vtx2HalfFacets_REF[10].Set(9,6,2);
     // error check
     const std::vector<VtxHalfFacetType>& c_Vtx2HF = TM.Get_Vtx2HalfFacets().Get_VtxMap();
     for (VtxIndType jj = 0; jj < c_Vtx2HF.size(); ++jj)
@@ -150,14 +178,16 @@ int main()
         }
 
     // display cells attached to a vertex
-    VtxIndType V_IN = 2;
+    VtxIndType V_IN = 5;
     TM.Display_Cells_Attached_To_Vertex(V_IN);
     cout << endl;
 
     // check attached cells against reference data
-    std::vector<CellIndType> cell_ind_1;
-    TM.Get_Cells_Attached_To_Vertex(V_IN, 3, cell_ind_1);
-    const CellIndType cell_ind_1_REF[4] = {3, 0, 1, 2};
+    std::vector<CellIndType> cell_ind_1, cell_ind_2;
+    TM.Get_Cells_Attached_To_Vertex(V_IN, 0, cell_ind_1);
+    TM.Get_Cells_Attached_To_Vertex(V_IN, 4, cell_ind_2);
+    const CellIndType cell_ind_1_REF[4] = {0, 1, 2, 3};
+    const CellIndType cell_ind_2_REF[3] = {4, 5, 6};
     for (unsigned int jj = 0; jj < cell_ind_1.size(); ++jj)
         if (cell_ind_1[jj]!=cell_ind_1_REF[jj])
         {
@@ -165,21 +195,28 @@ int main()
             OUTPUT_CODE = 4;
             break;
         }
+    for (unsigned int jj = 0; jj < cell_ind_2.size(); ++jj)
+        if (cell_ind_2[jj]!=cell_ind_2_REF[jj])
+        {
+            cout << "Cell attachment data is incorrect!" << endl;
+            OUTPUT_CODE = 5;
+            break;
+        }
 
     // display if two cells are facet connected
-    const  VtxIndType V1 = 1;
+    const  VtxIndType V1 = 5;
     const CellIndType C1 = 0;
-    const CellIndType C2 = 1;
+    const CellIndType C2 = 4;
     TM.Display_Two_Cells_Are_Facet_Connected(V1, C1, C2);
     cout << endl;
 
     // check facet connected cells against reference data
     const bool CHK_Facet_Connected = TM.Two_Cells_Are_Facet_Connected(V1, C1, C2);
-    const bool CHK_Facet_Connected_REF = true;
+    const bool CHK_Facet_Connected_REF = false;
     if (CHK_Facet_Connected!=CHK_Facet_Connected_REF)
     {
         cout << "Facet connected cell data is incorrect!" << endl;
-        OUTPUT_CODE = 5;
+        OUTPUT_CODE = 6;
     }
 
     // display half-facets attached to given half-facet
@@ -191,8 +228,8 @@ int main()
     // check attached half-facets against reference data
     HalfFacetType attached_REF[4];
     attached_REF[0].Set(1,1);
-    attached_REF[1].Set(2,1);
-    attached_REF[2].Set(3,2);
+    attached_REF[1].Set(2,2);
+    attached_REF[2].Set(3,0);
     attached_REF[3].Set(0,0);
     std::vector<HalfFacetType> attached;
     TM.Get_HalfFacets_Attached_To_HalfFacet(TEST_attached, attached);
@@ -200,23 +237,23 @@ int main()
         if (!attached[jj].Equal(attached_REF[jj]))
         {
             cout << "HalfFacet attachment data is incorrect!" << endl;
-            OUTPUT_CODE = 6;
+            OUTPUT_CODE = 7;
             break;
         }
 
     // check that half-facet has no neighbor
-    TEST_attached.Set(3,1);
+    TEST_attached.Set(4,2);
     TM.Get_HalfFacets_Attached_To_HalfFacet(TEST_attached, attached);
     if (attached.size()!=1)
     {
         cout << "HalfFacet attachment data is incorrect!" << endl;
-        OUTPUT_CODE = 7;
+        OUTPUT_CODE = 8;
     }
     else if (!TEST_attached.Equal(attached[0]))
     {
         cout << "HalfFacet attachment should only include the initial given half-facet..." << endl;
         cout << "          but it does not!" << endl;
-        OUTPUT_CODE = 8;
+        OUTPUT_CODE = 9;
     }
 
     // display non-manifold facets (edges)
@@ -224,15 +261,16 @@ int main()
     cout << endl;
 
     // check non-manifold facets (edges) against reference data
-    HalfFacetType non_manifold_hf_REF[1];
-    non_manifold_hf_REF[0].Set(3,2);
+    HalfFacetType non_manifold_hf_REF[2];
+    non_manifold_hf_REF[0].Set(3,0);
+    non_manifold_hf_REF[1].Set(6,0);
     std::vector<HalfFacetType> non_manifold_hf;
     TM.Get_Nonmanifold_HalfFacets(non_manifold_hf);
     for (unsigned int jj = 0; jj < non_manifold_hf.size(); ++jj)
         if (!non_manifold_hf[jj].Equal(non_manifold_hf_REF[jj]))
         {
             cout << "Non-manifold facet data is incorrect!" << endl;
-            OUTPUT_CODE = 9;
+            OUTPUT_CODE = 10;
             break;
         }
 
@@ -241,13 +279,16 @@ int main()
     cout << endl;
 
     // check non-manifold vertices against reference data
+    const VtxIndType non_manifold_vtx_REF[1] = {5};
     std::vector<VtxIndType> non_manifold_vtx;
     TM.Get_Nonmanifold_Vertices(non_manifold_vtx);
-    if (non_manifold_vtx.size()!=0)
-    {
-        cout << "Non-manifold vertex data is incorrect!" << endl;
-        OUTPUT_CODE = 10;
-    }
+    for (unsigned int jj = 0; jj < non_manifold_vtx.size(); ++jj)
+        if (non_manifold_vtx[jj]!=non_manifold_vtx_REF[jj])
+        {
+            cout << "Non-manifold vertex data is incorrect!" << endl;
+            OUTPUT_CODE = 11;
+            break;
+        }
 
     TM.Display_Unique_Vertices();
     cout << endl;
@@ -255,12 +296,12 @@ int main()
     // check unique vertices against reference data
     std::vector<VtxIndType> uv;
     TM.Get_Unique_Vertices(uv);
-    const VtxIndType uv_REF[6] = {0, 1, 2, 3, 4, 5};
+    const VtxIndType uv_REF[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     for (unsigned int jj = 0; jj < uv.size(); ++jj)
         if (uv[jj]!=uv_REF[jj])
         {
             cout << "Unique vertex data is incorrect!" << endl;
-            OUTPUT_CODE = 11;
+            OUTPUT_CODE = 12;
             break;
         }
 
@@ -276,27 +317,27 @@ int main()
     cout << endl;
 
     // test if a pair of vertices is connected by an edge
-    cout << "Vtx #1 and Vtx #5 are connected." << endl;
-    if (!TM.Is_Connected(1, 5))
+    cout << "Vtx #5 and Vtx #9 are connected." << endl;
+    if (!TM.Is_Connected(5, 9))
     {
         cout << "Incorrect!  They are NOT connected!" << endl;
-        OUTPUT_CODE = 12;
+        OUTPUT_CODE = 13;
     }
     // test if a pair of vertices is connected by an edge
-    cout << "Vtx #0 and Vtx #3 are NOT connected." << endl;
-    if (TM.Is_Connected(0, 3))
+    cout << "Vtx #7 and Vtx #2 are NOT connected." << endl;
+    if (TM.Is_Connected(7, 2))
     {
         cout << "Incorrect!  They ARE connected!" << endl;
-        OUTPUT_CODE = 13;
+        OUTPUT_CODE = 14;
     }
     cout << endl;
 
     // display all cells attached to an edge
     std::vector<CellIndType> attached_cells;
     MeshEdgeType EE;
-    EE.Set(1,2);
+    EE.Set(1,5);
     TM.Get_Cells_Attached_To_Edge(EE, attached_cells);
-    cout << "Here are the cell indices of cells attached to the edge [1, 2]:" << endl;
+    cout << "Here are the cell indices of cells attached to the edge [1, 5]:" << endl;
     std::vector<CellIndType>::const_iterator ic;
     for (ic = attached_cells.begin(); ic!=attached_cells.end(); ++ic)
         cout << "Cell #" << (*ic) << endl;

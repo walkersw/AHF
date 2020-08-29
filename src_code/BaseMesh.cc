@@ -2,7 +2,7 @@
 ============================================================================================
    Base class for array based half-facet (AHF) data structure to store and process meshes.
 
-   Note: this base class is used in deriving the 1-D, 2-D, and 3-D mesh classes,
+   Note: this base class is used in deriving the 0-D, 1-D, 2-D, and 3-D mesh classes,
    as well as arbitrarily higher dimensions (all simplex meshes).
    Note: no vertex coordinates are stored in this class; this is purely topological.
    Note: everything is indexed from 0!
@@ -211,6 +211,27 @@ public:
     //inline const CellType& Get_Cell(const CellIndType&) const;
     inline const CellSimplexType<CELL_DIM>& Get_Cell(const CellIndType&) const;
 
+    // get unique set of vertices
+    void Get_Unique_Vertices(std::vector<VtxIndType>&);
+    void Display_Unique_Vertices();
+    // get number of vertices referenced in Cell
+    VtxIndType Num_Vtx()
+    {
+        std::vector<VtxIndType> uv;
+        Get_Unique_Vertices(uv);
+        return (VtxIndType) uv.size();
+    };
+    // get maximum vertex index referenced in Cell
+    VtxIndType Max_Vtx_Index()
+    {
+        std::vector<VtxIndType> uv;
+        Get_Unique_Vertices(uv);
+        return (VtxIndType) uv.back();
+    };
+
+    // map vertex indices to new indices
+    void Reindex_Vertices(const VtxIndType&, const VtxIndType*);
+    
     // finalize the data structures for determining mesh connectivity
     //    (i.e. neighbors, vtx2half-facet mapping, etc.) and *close* the mesh.
     void Finalize_Mesh_Connectivity();
@@ -226,23 +247,7 @@ public:
     // get read access to Vtx2HalfFacets
     inline const Vtx2HalfFacet_Mapping& Get_Vtx2HalfFacets() const { return Vtx2HalfFacets; };
 
-    // get unique set of vertices
-    void Get_Unique_Vertices(std::vector<VtxIndType>& uv) const { Vtx2HalfFacets.Get_Unique_Vertices(uv); };
-    void Display_Unique_Vertices() const { Vtx2HalfFacets.Display_Unique_Vertices(); };
-    // get number of vertices referenced in Cell (don't forget to run Build_Vtx2HalfFacets)
-    VtxIndType Num_Vtx() const
-    {
-        std::vector<VtxIndType> uv;
-        Get_Unique_Vertices(uv);
-        return (VtxIndType) uv.size();
-    };
-    // get maximum vertex index referenced in Cell (don't forget to run Build_Vtx2HalfFacets)
-    VtxIndType Max_Vtx_Index() const
-    {
-        std::vector<VtxIndType> uv;
-        Get_Unique_Vertices(uv);
-        return (VtxIndType) uv.back();
-    };
+    //void Display_Unique_Vertices() const { Vtx2HalfFacets.Display_Unique_Vertices(); };
 
     // returns a unique set of all edges of the mesh
     void Get_Edges(std::vector<MeshEdgeType>&) const;
@@ -673,6 +678,112 @@ inline const CellSimplexType<CELL_DIM>& BM<CELL_DIM>::Get_Cell(const CellIndType
     assert((ci < Num_Cells()) && (ci!=NULL_Cell));
 
     return Cell[ci];
+}
+
+/***************************************************************************************/
+/* get unique list of vertices (the non-const version). */
+template <SmallIndType CELL_DIM>
+void BM<CELL_DIM>::Get_Unique_Vertices(std::vector<VtxIndType>& uv)
+{
+    uv.clear();
+    
+    if (Mesh_Open)
+    {
+        const CellIndType NC = Cell.size(); 
+        const SmallIndType Num_Local_Vtx = (SmallIndType) (CELL_DIM+1);
+        // make it big enough to include disjoint cells
+        uv.reserve( Num_Local_Vtx * NC + 1);
+
+        // add all vertices of each cell
+        for (CellIndType ci = 0; ci < NC; ++ci)
+        {
+            const VtxIndType* c_vtx = Cell[ci].vtx;
+            // loop through each vertex of the current (simplex) cell
+            for (SmallIndType vi = 0; vi < CELL_DIM+1; ++vi)
+            {
+                const VtxIndType global_vi = c_vtx[vi];
+                uv.push_back(global_vi);
+            }
+        }
+        std::sort(uv.begin(),uv.end());
+        
+        // get unique set of vertices
+        std::vector<VtxIndType>::iterator it_end;
+        it_end = std::unique_copy(uv.begin(), uv.end(), uv.begin());
+        // get number of unique vertices
+        const VtxIndType LENGTH = (unsigned int) std::distance(uv.begin(),it_end);
+        // resize
+        uv.resize(LENGTH);
+    }
+    else
+    {
+        Vtx2HalfFacets.Get_Unique_Vertices(uv);
+    }
+}
+
+/***************************************************************************************/
+/* print unique list of vertices */
+template <SmallIndType CELL_DIM>
+void BM<CELL_DIM>::Display_Unique_Vertices()
+{
+    if (Mesh_Open)
+    {
+        // extract all the vertex indices
+        std::vector<VtxIndType> unique_vertices;
+        Get_Unique_Vertices(unique_vertices);
+
+        // now print them out
+        std::cout << "Unique list of vertex indices: " << std::endl;
+        std::cout << *(unique_vertices.begin());
+        for (std::vector<VtxIndType>::const_iterator vi=unique_vertices.begin()+1; vi!=unique_vertices.end(); ++vi)
+        {
+            std::cout << ", " << (*vi);
+        }
+        std::cout << std::endl;
+    }
+    else
+    {
+        Vtx2HalfFacets.Display_Unique_Vertices();
+    }
+}
+
+/***************************************************************************************/
+/* re-index the vertices in the mesh.
+   example:  new_index = new_indices[old_index] */
+template <SmallIndType CELL_DIM>
+void BM<CELL_DIM>::Reindex_Vertices(const VtxIndType& num_new_indices, const VtxIndType* new_indices)
+{
+    // the mesh must be *open* to do this.
+    if (!Is_Mesh_Open())
+        return;
+
+    // basic check
+    if (num_new_indices < Max_Vtx_Index())
+    {
+        std::cerr << "Fatal error in 'BaseMesh.Reindex_Vertices'!" << std::endl;
+        std::cerr << "    The given list of indices is shorter than the max vertex index" << std::endl;
+        std::cerr << "    referenced by cells in the mesh." << std::endl;
+        std::exit(1);
+    }
+    
+    // go through all the cells, and map those vertices
+    const CellIndType NC = Num_Cells();
+    for (CellIndType ci = 0; ci < NC; ++ci)
+    {
+        VtxIndType* c_vtx = Cell[ci].vtx;
+        // loop through each vertex of the current (simplex) cell
+        for (SmallIndType vi = 0; vi < CELL_DIM+1; ++vi)
+        {
+            c_vtx[vi] = new_indices[c_vtx[vi]];
+        }
+    }
+    
+    // go through Vtx2HalfFacets and map its vertices
+    std::vector<VtxHalfFacetType>& V2HF = Vtx2HalfFacets.Get_VtxMap();
+    for (std::vector<VtxHalfFacetType>::iterator it=V2HF.begin(); it!=V2HF.end(); ++it)
+        {
+            (*it).vtx = new_indices[(*it).vtx];
+        }
 }
 
 /***************************************************************************************/

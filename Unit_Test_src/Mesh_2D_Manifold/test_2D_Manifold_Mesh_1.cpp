@@ -40,13 +40,19 @@ int main()
     VX.Set_Coord(3, 0.0,1.0);
     VX.Set_Coord(4, 0.5,0.5);
 
+    // // re-index
+    // const VtxIndType old_indices[5] = {0, 1, 2, 3, 4};
+    // const VtxIndType new_indices[5] = {3, 7, 8, 9, 12};
+    // TM.Reindex_Vertices(5, new_indices);
+    // VX.Reindex_Vertices(5, old_indices, new_indices);
+
     // now display coordinates
     cout << endl;
     VX.Display_Vtx_Coord();
 
     // we now stop adding cells and coordinates
     TM.Finalize_v2hfs_DEBUG();
-
+    
     // now display the half-facets (attached to vertices) of the intermediate structure 'v2hfs'
     cout << endl;
     TM.Display_v2hfs();
@@ -394,15 +400,79 @@ int main()
     }
     cout << endl;
     
+    // test: volume
+    RealType   Vol_out[4];
+    TM.Volume(4, CI_all, Vol_out);
+    cout << "Here are the 2-volumes (areas) for these cells: " << endl;
+    for (CellIndType ii = 0; ii < 4; ++ii)
+        cout << "Cell #" << CI_all[ii] << ",  Volume: " << Vol_out[ii] << endl;
+    const bool VOL_CHK = (abs(Vol_out[0]-0.25) > 1E-14) || (abs(Vol_out[1]-0.25) > 1E-14)
+                      || (abs(Vol_out[2]-0.25) > 1E-14) || (abs(Vol_out[3]-0.25) > 1E-14);
+    if (VOL_CHK)
+    {
+        cout << "Incorrect!  The volumes (areas) should be 0.25 for all." << endl;
+        OUTPUT_CODE = 19;
+    }
+    cout << endl;
     
+    // test: shape regularity
+    RealType   SR_out[4];
+    TM.Shape_Regularity(4, CI_all, SR_out);
+    cout << "Here are the shape regularity ratios for these cells: " << endl;
+    for (CellIndType ii = 0; ii < 4; ++ii)
+        cout << "Cell #" << CI_all[ii] << ",  SR: " << SR_out[ii] << endl;
+    const bool SR_CHK = (abs(SR_out[0]-2.4142135623730950488) > 1E-14) || (abs(SR_out[1]-2.4142135623730950488) > 1E-14)
+                     || (abs(SR_out[2]-2.4142135623730950488) > 1E-14) || (abs(SR_out[3]-2.4142135623730950488) > 1E-14);
+    if (SR_CHK)
+    {
+        cout << "Incorrect!  The shape regularity ratios should be ~2.41421356 for all." << endl;
+        OUTPUT_CODE = 20;
+    }
+    cout << endl;
     
+    // test: bounding box
+    PointType   BB_min[2];
+    PointType   BB_max[2];
+    TM.Bounding_Box(4, CI_all, BB_min, BB_max);
+    cout << "Here is the bounding box of the mesh: " << endl;
+    cout << "     BB_min = {" << BB_min[0] << ", " << BB_min[1] << "}," << endl;
+    cout << "     BB_max = {" << BB_max[0] << ", " << BB_max[1] << "}." << endl;
+    const bool BB_CHK = (abs(BB_min[0]-0.0) > 1E-14) || (abs(BB_min[1]-0.0) > 1E-14)
+                     || (abs(BB_max[0]-1.0) > 1E-14) || (abs(BB_max[1]-1.0) > 1E-14);
+    if (BB_CHK)
+    {
+        cout << "Incorrect!  The bounding box should be {0.0, 0.0} to {1.0, 1.0}." << endl;
+        OUTPUT_CODE = 21;
+    }
+    cout << endl;
     
+    // test: angles
+    RealType   Ang[4*3];
+    TM.Angles(4, CI_all, Ang);
+    cout << "Here are the (interior) angles, in radians, of each cell in the mesh: " << endl;
+    for (CellIndType ii = 0; ii < 4; ++ii)
+        cout << "Cell #" << CI_all[ii] << ",  Angles: "
+             << Ang[ii*3 + 0] << ", " << Ang[ii*3 + 1] << ", " << Ang[ii*3 + 2] << "." << endl;
+    const bool ANG_CHK = (abs(Ang[0]-(PI/2)) > 1E-14) || (abs(Ang[1]-(PI/4)) > 1E-14) || (abs(Ang[2]-(PI/4)) > 1E-14)
+                      || (abs(Ang[3]-(PI/2)) > 1E-14) || (abs(Ang[4]-(PI/4)) > 1E-14) || (abs(Ang[5]-(PI/4)) > 1E-14)
+                      || (abs(Ang[6]-(PI/2)) > 1E-14) || (abs(Ang[7]-(PI/4)) > 1E-14) || (abs(Ang[8]-(PI/4)) > 1E-14)
+                      || (abs(Ang[9]-(PI/2)) > 1E-14) || (abs(Ang[10]-(PI/4)) > 1E-14) || (abs(Ang[11]-(PI/4)) > 1E-14);
+    if (ANG_CHK)
+    {
+        cout << "Incorrect!  The angles should be {pi/2, pi/4, pi/4} for all the cells." << endl;
+        OUTPUT_CODE = 22;
+    }
+    cout << endl;
+
     
     
     if (OUTPUT_CODE==0)
         cout << "Unit test is successful!" << endl;
     else
+    {
         cout << "Unit test failed!" << endl;
+        cout << "See OUTPUT_CODE: " << OUTPUT_CODE << endl;
+    }
     cout << endl;
 
     return OUTPUT_CODE;

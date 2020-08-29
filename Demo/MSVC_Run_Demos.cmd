@@ -32,11 +32,11 @@ rem loop through all demo directories
   cd !demo_dirs[%%n]!
   call !demo_files[%%n]!.exe
   @if !errorlevel! equ 0 (
-    @echo *Successfully* completed this demo: !demo_dirs[%%n]!
+    @echo *Successfully* completed this demo: !demo_files[%%n]!
   ) else (
     @echo The error code is:
 	@echo !errorlevel!
-    @echo This demo *failed*: !demo_dirs[%%n]!
+    @echo This demo *failed*: !demo_files[%%n]!
 	@echo --------------------------------------------------
 	exit /b
   )
